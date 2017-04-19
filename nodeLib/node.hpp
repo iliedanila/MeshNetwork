@@ -50,7 +50,7 @@ public:
     
     void AcceptMessages(std::function< void(DataMessage&) > callback);
 
-    io_service& IOService() const { return io_service; }
+    io_service& IOService() const { return ioservice; }
     
 private:
     friend struct MessageVisitor;
@@ -94,7 +94,7 @@ private:
     
     tcp::socket connect_socket;
     tcp::socket accept_socket;
-    io_service& io_service;
+    io_service& ioservice;
 };
     
 }

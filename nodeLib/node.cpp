@@ -12,14 +12,15 @@ using namespace boost::asio::ip;
 namespace NetworkLayer
 {
 
-Node::Node(std::string _name,
-                         boost::asio::io_service& _io_service)
+Node::Node(
+    std::string _name,
+    boost::asio::io_service& _ioservice)
 :
     name(std::move(_name)),
     closing(false),
-    connect_socket(_io_service),
-    accept_socket(_io_service),
-    io_service(_io_service)
+    connect_socket(_ioservice),
+    accept_socket(_ioservice),
+    ioservice(_ioservice)
 {}
 
 Node::~Node()
@@ -31,7 +32,7 @@ void Node::Accept(unsigned short _port)
     
     if (!acceptor)
     {
-        acceptor = std::make_unique<tcp::acceptor>(io_service, endpoint);
+        acceptor = std::make_unique<tcp::acceptor>(ioservice, endpoint);
     }
     
     acceptor->async_accept(
@@ -67,7 +68,7 @@ void Node::Connect(
     std::string host,
     unsigned short port)
 {
-    tcp::resolver resolver(io_service);
+    tcp::resolver resolver(ioservice);
     auto endpoint = resolver.resolve({host, std::to_string(port)});
     
     boost::asio::async_connect(
@@ -230,7 +231,7 @@ SharedConnection Node::AddConnection(tcp::socket&& socket)
 {
     auto connection = std::make_shared<Connection>(
         *this,
-        io_service,
+        ioservice,
         std::move(socket),
         std::bind(
             &Node::CloseConnection,

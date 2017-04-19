@@ -44,7 +44,7 @@ private:
     void ReadHeader(ReadCallback _callback);
     void ReadBody(ReadCallback _callback);
 
-    io_service& io_service;
+    io_service& ioservice;
     tcp::socket socket;
     std::function<void(std::shared_ptr<Connection>)> closeHandler;
     
