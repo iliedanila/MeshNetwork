@@ -34,7 +34,7 @@ public:
     void Accept(unsigned short _port);
     void Connect(std::string _host, unsigned short _port);
     
-    std::string Name() const { return name; }
+    std::string& Name() { return name; }
     void Close();
     
     std::vector<std::string> GetAccessibleNodes();

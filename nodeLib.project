@@ -19,6 +19,7 @@
     <File Name="nodeLib/message.hpp"/>
     <File Name="nodeLib/messageVisitor.hpp"/>
     <File Name="nodeLib/routingMessage.hpp"/>
+    <File Name="nodeLib/node.hpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
