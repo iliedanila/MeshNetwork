@@ -10,7 +10,10 @@ namespace NetworkLayer
 class DataMessage
 {
 public:
-    DataMessage(): distance(0)
+    DataMessage()
+    :
+        distance(0),
+        messageID(0)
     {}
 
     ~DataMessage() {}

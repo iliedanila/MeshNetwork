@@ -28,7 +28,7 @@ typedef std::function<void(std::string, SendError)> AckMessageCallback;
 class Node
 {
 public:
-    Node(std::string _name,	io_service& _io_service);
+    Node(std::string _name,	io_service& _io_service, bool _isLogger = false);
     ~Node();
     
     void Accept(unsigned short _port);
@@ -50,12 +50,16 @@ public:
     
     void AcceptMessages(std::function< void(DataMessage&) > callback);
 
+    void Log(const std::string& logMessage);
+
     io_service& IOService() const { return ioservice; }
     
 private:
     friend struct MessageVisitor;
     
     SharedConnection AddConnection(tcp::socket&&);
+
+    void StartConnection(SharedConnection connection);
     
     void CloseConnection(SharedConnection);
     
@@ -80,9 +84,17 @@ private:
         RoutingMessage& forward,
         SharedConnection connection);
 
+    void ProcessLogger(
+        RoutingMessage& message,
+        RoutingMessage& reply,
+        RoutingMessage& forward);
+
+    SharedConnection GetConnectionToNode(const std::string& nodeName);
+
     std::string name;
     std::set<SharedConnection> connections;
     std::map<std::string, std::size_t> nodeDistances;
+    std::pair<std::string, std::size_t> loggerDistance;
     std::map<std::string, SharedConnection> nodePaths;
     std::unordered_map<std::size_t, AckMessageCallback> ackCallbacks;
     
@@ -95,6 +107,7 @@ private:
     tcp::socket connect_socket;
     tcp::socket accept_socket;
     io_service& ioservice;
+    bool isLogger;
 };
     
 }

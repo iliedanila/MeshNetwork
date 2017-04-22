@@ -5,11 +5,16 @@
 #include "routingMessage.hpp"
 #include "dataMessage.hpp"
 #include "dataMessageAck.hpp"
+#include "logMessage.hpp"
 
 namespace NetworkLayer
 {
 
-typedef boost::variant< RoutingMessage, DataMessage, DataMessageAck > MessageVariant;
+typedef boost::variant<
+    RoutingMessage,
+    DataMessage,
+    DataMessageAck,
+    LogMessage> MessageVariant;
     
 }
 

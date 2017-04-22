@@ -36,6 +36,9 @@
     <ClInclude Include="nodeLib\message.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="nodeLib\logMessage.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

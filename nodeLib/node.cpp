@@ -6,6 +6,8 @@
 #include <string>
 #include <functional>
 #include <iostream>
+#include <chrono>
+#include <iomanip>
 
 using namespace boost::asio::ip;
 
@@ -14,13 +16,15 @@ namespace NetworkLayer
 
 Node::Node(
     std::string _name,
-    boost::asio::io_service& _ioservice)
+    boost::asio::io_service& _ioservice,
+    bool _isLogger)
 :
     name(std::move(_name)),
     closing(false),
     connect_socket(_ioservice),
     accept_socket(_ioservice),
-    ioservice(_ioservice)
+    ioservice(_ioservice),
+    isLogger(_isLogger)
 {}
 
 Node::~Node()
@@ -43,14 +47,8 @@ void Node::Accept(unsigned short _port)
             if (!error)
             {
                 auto connection = AddConnection(std::move(accept_socket));
-                                  
-                connection->Read(std::bind(
-                    &Node::OnRead,
-                    this,
-                    std::placeholders::_1,
-                    std::placeholders::_2));
-                                  
-                SendRoutingToNewConnection(connection);
+                    
+                StartConnection(connection);
             }
             else
             {
@@ -81,13 +79,7 @@ void Node::Connect(
             {
                 auto connection = AddConnection(std::move(connect_socket));
 
-                connection->Read(std::bind(
-                    &Node::OnRead,
-                    this,
-                    std::placeholders::_1,
-                    std::placeholders::_2));
-                                       
-                SendRoutingToNewConnection(connection);
+                StartConnection(connection);
             }
             else
             {
@@ -216,6 +208,12 @@ void Node::SendRoutingToNewConnection(SharedConnection connection)
     {
         message.AddNodeDistance(nodeDistance);
     }
+
+    if(isLogger)
+    {
+        message.AddLogger(std::make_pair(name, 0));
+    }
+
     connection->Send(
         message, 
         std::bind(
@@ -249,16 +247,6 @@ void Node::OnRead(MessageVariant _message, SharedConnection _connection)
 
 void Node::OnWrite(MessageVariant message, boost::system::error_code error) const
 {
-    if(error)
-    {
-        std::cout 
-            << "Error writing in node: "
-            << name 
-            << " : "
-            << error.message() 
-            << "\n";
-        std::cout << "Message type: " << message.type().name() << "\n";
-    }
 }
 
 template <>
@@ -269,9 +257,13 @@ void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
     
     ProcessAddNodePaths(_message, reply, forward, _connection);
     ProcessFailedNodes(_message, reply, forward, _connection);
+    ProcessLogger(_message, reply, forward);
+
+
     
     if (reply.NodeDistances().size() > 0 ||
-        reply.FailedNodes().size() > 0)
+        reply.FailedNodes().size() > 0 ||
+        reply.LoggerDistance().first != "")
     {
         _connection->Send(
             reply,
@@ -285,7 +277,8 @@ void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
     }
     
     if (forward.NodeDistances().size() > 0 ||
-        forward.FailedNodes().size() > 0)
+        forward.FailedNodes().size() > 0 ||
+        forward.LoggerDistance().first != "")
     {
         for (auto conn : connections)
         {
@@ -408,6 +401,47 @@ void Node::HandleMessage(DataMessageAck& _message, SharedConnection _connection)
     }
 }
 
+template<>
+void Node::HandleMessage(LogMessage& _message, SharedConnection _connection)
+{
+    if (_message.DestinationNodeName() == name)
+    {
+        std::chrono::time_point<std::chrono::system_clock> epoch;
+        std::chrono::milliseconds millisecondsSinceEpoch{ _message.MillisecondsSinceEpoch() };
+        auto logTime = std::chrono::system_clock::to_time_t(epoch + millisecondsSinceEpoch);
+
+        std::cout
+            << "LOG -- "
+            << std::put_time(std::localtime(&logTime), "%F %T")
+            << " -- "
+            << _message.SourceNodeName()
+            << " -- "
+            << _message.Log()
+            << "\n";
+    }
+    else
+    {
+        auto forwardConnection = GetConnectionToNode(_message.DestinationNodeName());
+        if (forwardConnection)
+        {
+            ioservice.post(
+                [this, forwardConnection, _message]
+                {
+                    forwardConnection->Send(
+                        _message,
+                        std::bind(
+                            &Node::OnWrite,
+                            this,
+                            _message,
+                            std::placeholders::_1
+                        )
+                    );
+                }
+            );
+        }
+    }
+}
+
 void Node::ProcessAddNodePaths(
     RoutingMessage& message,
     RoutingMessage& reply,
@@ -463,6 +497,10 @@ void Node::ProcessFailedNodes(
                 nodeDistances.erase(node);
                 nodePaths.erase(node);
                 forward.AddFailedNode(node);
+                if(loggerDistance.first == node)
+                {
+                    loggerDistance = std::make_pair("", 0);
+                }
                 
                 // notify node owner of failed node
                 if(notifyNewNodeStatusCallback)
@@ -478,5 +516,89 @@ void Node::ProcessFailedNodes(
         }
     }
 }
-    
+
+void Node::ProcessLogger(
+    RoutingMessage& message,
+    RoutingMessage& reply,
+    RoutingMessage& forward)
+{
+    auto messageLoggerDistance = message.LoggerDistance();
+
+    if (messageLoggerDistance.first != "")
+    {
+        if (
+            loggerDistance.first == "" ||
+            loggerDistance.second > messageLoggerDistance.second + 1)
+        {
+            loggerDistance = messageLoggerDistance;
+            loggerDistance.second++;
+            forward.AddLogger(loggerDistance);
+        }
+        else if (loggerDistance.second < messageLoggerDistance.second + 1)
+        {
+            reply.AddLogger(loggerDistance);
+        }
+    }
+}
+
+    void Node::StartConnection(SharedConnection connection)
+    {
+        connection->Read(
+            std::bind(
+                &Node::OnRead,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2
+            )
+        );
+        
+        ioservice.post(
+            [this, connection]
+            {
+                SendRoutingToNewConnection(connection);
+            }
+        );
+    }
+
+    void Node::Log(const std::string& logMessage)
+    {
+        if (loggerDistance.first != "")
+        {
+            auto millisecondsSinceEpoch = 
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()
+                ).count();
+            LogMessage message(millisecondsSinceEpoch, name, loggerDistance.first, logMessage);
+
+            auto connection = GetConnectionToNode(loggerDistance.first);
+            if (connection)
+            {
+                ioservice.post(
+                    [this, connection, message]
+                    {
+                        connection->Send(
+                            message,
+                            std::bind(
+                                &Node::OnWrite,
+                                this,
+                                message,
+                                std::placeholders::_1
+                            )
+                        );
+                    }
+                );
+            }
+        }
+    }
+
+    SharedConnection Node::GetConnectionToNode(const std::string& nodeName)
+    {
+        if (IsNodeAccessible(nodeName))
+        {
+            auto namePath = nodePaths.find(nodeName);
+            auto connection = namePath->second;
+            return connection;
+        }
+        return nullptr;
+    }
 }

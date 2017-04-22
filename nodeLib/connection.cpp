@@ -21,12 +21,10 @@ Connection::Connection(
     closeHandler(_closeHandler),
     node(_node)
 {
-    std::cout << "Connection() in node " << node.Name() << "\n";
 }
 
 Connection::~Connection()
 {
-    std::cout << "~Connection() in node " << node.Name() << "\n";
 }
 
 void Connection::Write()
