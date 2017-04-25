@@ -3,8 +3,8 @@
 #include "node.hpp"
 
 #include <iostream>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/variant.hpp>
 
 namespace NetworkLayer
@@ -63,7 +63,8 @@ void Connection::Read(ReadCallback _callback)
 void Connection::Send(MessageVariant _message, WriteCallback _callback)
 {
     std::stringstream ss;
-    boost::archive::binary_oarchive oarchive(ss);
+    boost::archive::text_oarchive oarchive(ss);
+    //boost::archive::binary_oarchive oarchive(ss);
     oarchive << _message;
 
     Message message(ss.str());
@@ -120,7 +121,7 @@ void Connection::ReadBody(ReadCallback _callback)
             {
                 std::string content(readMessage.GetBody().begin(), readMessage.GetBody().end());
                 std::stringstream ss(content);
-                boost::archive::binary_iarchive iarchive(ss);
+                boost::archive::text_iarchive iarchive(ss);
 
                 MessageVariant message;
                 iarchive >> message;
