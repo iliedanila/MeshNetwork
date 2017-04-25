@@ -97,6 +97,10 @@ void Connection::ReadHeader(ReadCallback _callback)
                 readMessage.DecodeHeader();
                 ReadBody(_callback);
             }
+            else
+            {
+                std::cout << "Error reading header: " << error_code.message() << "\n";
+            }
         }
     );
 }
@@ -122,6 +126,10 @@ void Connection::ReadBody(ReadCallback _callback)
 
                 _callback(message, self);
                 ReadHeader(_callback);
+            }
+            else
+            {
+                std::cout << "Error reading body: " << error_code.message() << "\n";
             }
         }
     );
