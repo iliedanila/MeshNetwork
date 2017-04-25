@@ -38,7 +38,7 @@ void Connection::Write()
             writeMessages.front().first.GetOutputBuffer().size()
         ),
         [this, self]
-        (boost::system::error_code error, std::size_t /*lenght*/)
+        (boost::system::error_code error, uint32_t /*lenght*/)
         {
             if(!error)
             {
@@ -91,7 +91,7 @@ void Connection::ReadHeader(ReadCallback _callback)
         socket,
         buffer(readMessage.GetHeader(), Message::eHeaderLength),
         [this, self, _callback]
-        (boost::system::error_code error_code, std::size_t length)
+        (boost::system::error_code error_code, uint32_t length)
         {
             if(!error_code)
             {
@@ -114,7 +114,7 @@ void Connection::ReadBody(ReadCallback _callback)
         socket,
         buffer(readMessage.GetBody(), readMessage.GetBodySize()),
         [this, self, _callback]
-        (boost::system::error_code error_code, std::size_t /*length*/)
+        (boost::system::error_code error_code, uint32_t /*length*/)
         {
             if (!error_code)
             {

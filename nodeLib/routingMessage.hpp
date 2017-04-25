@@ -19,7 +19,7 @@ public:
     auto FailedNodes() { return failedNodes; }
     auto LoggerDistance() { return loggerDistance; }
     
-    void AddNodeDistance(std::pair<std::string, std::size_t> _nodeDistance)
+    void AddNodeDistance(std::pair<std::string, uint32_t> _nodeDistance)
     {
         nodeDistances.insert(_nodeDistance);
     }
@@ -29,7 +29,7 @@ public:
         failedNodes.push_back(node);
     }
 
-    void AddLogger(std::pair<std::string, std::size_t> _loggerDistance)
+    void AddLogger(std::pair<std::string, uint32_t> _loggerDistance)
     {
         loggerDistance = _loggerDistance;
     }
@@ -45,9 +45,9 @@ private:
     }
     
 private:
-    std::map<std::string, std::size_t> nodeDistances;
+    std::map<std::string, uint32_t> nodeDistances;
     std::vector<std::string> failedNodes;
-    std::pair<std::string, std::size_t> loggerDistance;
+    std::pair<std::string, uint32_t> loggerDistance;
 };
     
 }

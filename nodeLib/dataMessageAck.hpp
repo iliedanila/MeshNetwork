@@ -23,7 +23,7 @@ public:
         std::string source, 
         std::string destination, 
         SendError _error, 
-        std::size_t _messageID)
+        uint32_t _messageID)
     :
         sourceNodeName(std::move(source)),
         destinationNodeName(std::move(destination)),
@@ -48,7 +48,7 @@ private:
     std::string sourceNodeName;
     std::string destinationNodeName;
     SendError error;
-    std::size_t messageID;
+    uint32_t messageID;
 };
     
 }
