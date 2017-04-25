@@ -21,6 +21,8 @@
     <File Name="nodeLib/routingMessage.hpp"/>
     <File Name="nodeLib/node.hpp"/>
     <File Name="nodeLib/logMessage.hpp"/>
+    <File Name="nodeLib/handshake.hpp"/>
+    <File Name="nodeLib/handshakeReply.hpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
