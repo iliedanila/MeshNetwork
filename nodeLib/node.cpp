@@ -8,6 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <iomanip>
+#include <boost/variant/apply_visitor.hpp>
 
 using namespace boost::asio::ip;
 

@@ -57,7 +57,7 @@ public:
 private:
     friend struct MessageVisitor;
     
-    SharedConnection AddConnection(tcp::socket&&);
+    SharedConnection AddConnection(tcp::socket&& socket);
 
     void StartConnection(SharedConnection connection);
     

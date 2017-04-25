@@ -30,6 +30,7 @@ Connection::~Connection()
 void Connection::Write()
 {
     auto self(shared_from_this());
+
     boost::asio::async_write(
         socket,
         buffer(
