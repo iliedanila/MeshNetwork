@@ -6,6 +6,8 @@
 #include "dataMessage.hpp"
 #include "dataMessageAck.hpp"
 #include "logMessage.hpp"
+#include "handshake.hpp"
+#include "handshakeReply.hpp"
 
 namespace NetworkLayer
 {
@@ -14,7 +16,9 @@ typedef boost::variant<
     RoutingMessage,
     DataMessage,
     DataMessageAck,
-    LogMessage> MessageVariant;
+    LogMessage,
+    Handshake,
+    HandshakeReply> MessageVariant;
     
 }
 

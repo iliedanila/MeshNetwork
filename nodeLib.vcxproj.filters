@@ -39,6 +39,12 @@
     <ClInclude Include="nodeLib\logMessage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="nodeLib\handshake.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nodeLib\handshakeReply.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

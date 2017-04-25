@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "allMessages.hpp"
+#include "connection.hpp"
 #include "sendError.hpp"
 
 
@@ -21,8 +22,6 @@ typedef std::pair<std::string, std::size_t> NodeDistance;
 namespace NetworkLayer
 {
     
-class Connection;
-typedef std::shared_ptr<Connection> SharedConnection;
 typedef std::function<void(std::string, SendError)> AckMessageCallback;
 
 class Node
@@ -59,7 +58,7 @@ private:
     
     SharedConnection AddConnection(tcp::socket&& socket);
 
-    void StartConnection(SharedConnection connection);
+    void StartConnection(SharedConnection connection, Connection::Type type);
     
     void CloseConnection(SharedConnection);
     

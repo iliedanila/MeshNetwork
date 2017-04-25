@@ -23,6 +23,8 @@
     <ClInclude Include="nodeLib\connection.hpp" />
     <ClInclude Include="nodeLib\dataMessage.hpp" />
     <ClInclude Include="nodeLib\dataMessageAck.hpp" />
+    <ClInclude Include="nodeLib\handshake.hpp" />
+    <ClInclude Include="nodeLib\handshakeReply.hpp" />
     <ClInclude Include="nodeLib\logMessage.hpp" />
     <ClInclude Include="nodeLib\message.hpp" />
     <ClInclude Include="nodeLib\messageVisitor.hpp" />

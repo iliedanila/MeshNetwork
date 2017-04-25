@@ -49,7 +49,7 @@ void Node::Accept(unsigned short _port)
             {
                 auto connection = AddConnection(std::move(accept_socket));
                     
-                StartConnection(connection);
+                StartConnection(connection, Connection::eAccepted);
             }
             else
             {
@@ -80,7 +80,7 @@ void Node::Connect(
             {
                 auto connection = AddConnection(std::move(connect_socket));
 
-                StartConnection(connection);
+                StartConnection(connection, Connection::eConnected);
             }
             else
             {
@@ -443,6 +443,29 @@ void Node::HandleMessage(LogMessage& _message, SharedConnection _connection)
     }
 }
 
+template<>
+void Node::HandleMessage(Handshake& _message, SharedConnection _connection)
+{
+    // this is the accepted connection.
+    std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
+    HandshakeReply message(name);
+    _connection->Send(message, [this, _connection](boost::system::error_code ec)
+    {
+        if (!ec)
+        {
+            SendRoutingToNewConnection(_connection);
+        }
+    });
+}
+
+template<>
+void Node::HandleMessage(HandshakeReply& _message, SharedConnection _connection)
+{
+    // this is the connected connection.
+    std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
+    SendRoutingToNewConnection(_connection);
+}
+
 void Node::ProcessAddNodePaths(
     RoutingMessage& message,
     RoutingMessage& reply,
@@ -542,23 +565,39 @@ void Node::ProcessLogger(
     }
 }
 
-    void Node::StartConnection(SharedConnection connection)
+    void Node::StartConnection(SharedConnection connection, Connection::Type type)
     {
-        connection->Read(
-            std::bind(
-                &Node::OnRead,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2
-            )
-        );
-        
-        ioservice.post(
-            [this, connection]
+        if (type == Connection::eConnected)
+        {
+            Handshake message(name);
+            connection->Send(message, [this, connection](boost::system::error_code ec)
             {
-                SendRoutingToNewConnection(connection);
-            }
-        );
+                if (!ec)
+                {
+                    // Wait for reply.
+                    connection->Read(
+                        std::bind(
+                            &Node::OnRead,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2
+                        )
+                    );
+                }
+            });
+        }
+        else if (type == Connection::eAccepted)
+        {
+            // waiting for handshake message.
+            connection->Read(
+                std::bind(
+                    &Node::OnRead,
+                    this,
+                    std::placeholders::_1,
+                    std::placeholders::_2
+                )
+            );
+        }
     }
 
     void Node::Log(const std::string& logMessage)

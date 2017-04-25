@@ -7,7 +7,6 @@
 
 #include "allMessages.hpp"
 #include "message.hpp"
-#include "node.hpp"
 
 using namespace boost::asio;
 using namespace ip;
@@ -15,6 +14,7 @@ using namespace ip;
 namespace NetworkLayer
 {
 
+class Node;
 class Connection;
 typedef std::shared_ptr<Connection> SharedConnection;
 typedef std::function<void(boost::system::error_code)> WriteCallback;
@@ -24,6 +24,12 @@ typedef std::deque<std::pair<Message, WriteCallback>> MessageQueue;
 class Connection : public std::enable_shared_from_this<Connection>
 {
 public:
+    enum Type
+    {
+        eAccepted,
+        eConnected
+    };
+
     Connection(
         Node& _node,
         io_service& _io_service,
@@ -36,11 +42,11 @@ public:
     
     void Send(MessageVariant, WriteCallback);
 
-    void Write();
-    
     void Close();
     
 private:
+    void Write();
+
     void ReadHeader(ReadCallback _callback);
     void ReadBody(ReadCallback _callback);
 
