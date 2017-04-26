@@ -31,7 +31,7 @@ public:
     ~Node();
     
     void Accept(unsigned short _port);
-    void Connect(std::string _host, unsigned short _port);
+    void Connect(std::string _host, unsigned short _port, bool _reconnect = false);
     
     std::string& Name() { return name; }
     void Close();
@@ -56,7 +56,7 @@ public:
 private:
     friend struct MessageVisitor;
     
-    SharedConnection AddConnection(tcp::socket&& socket);
+    SharedConnection AddConnection(tcp::socket&& socket, bool reconnect);
 
     void StartConnection(SharedConnection connection, Connection::Type type);
     
@@ -67,6 +67,12 @@ private:
     void OnRead(MessageVariant, SharedConnection);
     
     void OnWrite(MessageVariant message, boost::system::error_code error) const;
+
+    void OnReconnectTimer(
+        std::shared_ptr<boost::asio::deadline_timer> timer,
+        std::string host,
+        unsigned short port,
+        const boost::system::error_code& error);
     
     template <typename MessageT>
     void HandleMessage(MessageT&, SharedConnection);

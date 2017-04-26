@@ -31,10 +31,11 @@ public:
     };
 
     Connection(
-        Node& _node,
-        io_service& _io_service,
-        tcp::socket&& _socket,
-        std::function<void(std::shared_ptr<Connection>)> _closeHandler);
+        Node& node,
+        io_service& ioservice,
+        tcp::socket&& socket,
+        bool reconnect,
+        std::function<void(std::shared_ptr<Connection>)> closeHandler);
 
     ~Connection();
     
@@ -43,6 +44,11 @@ public:
     void Send(MessageVariant, WriteCallback);
 
     void Close();
+
+    std::string RemoteIP() const { return socket.remote_endpoint().address().to_string(); }
+    unsigned short RemotePort() const { return socket.remote_endpoint().port(); }
+
+    bool ReconnectIfClosed() const { return reconnect; }
     
 private:
     void Write();
@@ -52,6 +58,7 @@ private:
 
     io_service& ioservice;
     tcp::socket socket;
+    bool reconnect;
     std::function<void(std::shared_ptr<Connection>)> closeHandler;
     
     Node& node;
