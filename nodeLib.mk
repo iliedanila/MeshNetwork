@@ -13,12 +13,12 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Ilie Danila
-Date                   :=25/04/17
+Date                   :=26/04/17
 CodeLitePath           :=/home/ilie/.codelite
-LinkerName             :=g++
-SharedObjectLinkerName :=g++ -shared -fPIC
+LinkerName             :=clang++
+SharedObjectLinkerName :=clang++ -shared -fPIC
 ObjectSuffix           :=.o
-DependSuffix           :=.o.d
+DependSuffix           :=
 PreprocessSuffix       :=.o.i
 DebugSwitch            :=-gstab
 IncludeSwitch          :=-I
@@ -48,12 +48,12 @@ LibPath                := $(LibraryPathSwitch).
 ## AR, CXX, CC, AS, CXXFLAGS and CFLAGS can be overriden using an environment variables
 ##
 AR       := ar rcus
-CXX      := g++
-CC       := gcc
-CXXFLAGS :=  -g $(Preprocessors)
+CXX      := clang++
+CC       := clang
+CXXFLAGS :=  -g -std=c++14  $(Preprocessors)
 CFLAGS   :=  -g $(Preprocessors)
 ASFLAGS  := 
-AS       := as
+AS       := llvm-as
 
 
 ##
@@ -93,24 +93,16 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix): nodeLib/connection.cpp $(IntermediateDirectory)/nodeLib_connection.cpp$(DependSuffix)
+$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix): nodeLib/connection.cpp 
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/nodes/nodeLib/nodeLib/connection.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/nodeLib_connection.cpp$(DependSuffix): nodeLib/connection.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/nodeLib_connection.cpp$(DependSuffix) -MM nodeLib/connection.cpp
-
 $(IntermediateDirectory)/nodeLib_connection.cpp$(PreprocessSuffix): nodeLib/connection.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/nodeLib_connection.cpp$(PreprocessSuffix) nodeLib/connection.cpp
 
-$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix): nodeLib/node.cpp $(IntermediateDirectory)/nodeLib_node.cpp$(DependSuffix)
+$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix): nodeLib/node.cpp 
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/nodes/nodeLib/nodeLib/node.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/nodeLib_node.cpp$(DependSuffix): nodeLib/node.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/nodeLib_node.cpp$(DependSuffix) -MM nodeLib/node.cpp
-
 $(IntermediateDirectory)/nodeLib_node.cpp$(PreprocessSuffix): nodeLib/node.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/nodeLib_node.cpp$(PreprocessSuffix) nodeLib/node.cpp
 
-
--include $(IntermediateDirectory)/*$(DependSuffix)
 ##
 ## Clean
 ##
