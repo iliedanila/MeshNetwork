@@ -172,10 +172,14 @@ void Node::CloseConnection(SharedConnection connectionDown)
         }
     }
     
-    for (auto key : toDelete)
+    for (auto nodeName : toDelete)
     {
-        nodePaths.erase(key);
-        nodeDistances.erase(key);
+        if (notifyNewNodeStatusCallback)
+        {
+            notifyNewNodeStatusCallback(nodeName, false);
+        }
+        nodePaths.erase(nodeName);
+        nodeDistances.erase(nodeName);
     }
     
     connectionDown->Close();
@@ -456,6 +460,11 @@ void Node::HandleMessage(Handshake& _message, SharedConnection _connection)
             SendRoutingToNewConnection(_connection);
         }
     });
+
+    if (notifyNewNodeStatusCallback)
+    {
+        notifyNewNodeStatusCallback(_message.NodeName(), true);
+    }
 }
 
 template<>
@@ -464,6 +473,11 @@ void Node::HandleMessage(HandshakeReply& _message, SharedConnection _connection)
     // this is the connected connection.
     std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
     SendRoutingToNewConnection(_connection);
+
+    if (notifyNewNodeStatusCallback)
+    {
+        notifyNewNodeStatusCallback(_message.NodeName(), true);
+    }
 }
 
 void Node::ProcessAddNodePaths(

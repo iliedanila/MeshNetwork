@@ -101,6 +101,10 @@ void Connection::ReadHeader(ReadCallback _callback)
             else
             {
                 std::cout << "Error reading header: " << error_code.message() << "\n";
+                if (closeHandler)
+                {
+                    closeHandler(self);
+                }
             }
         }
     );
@@ -131,6 +135,10 @@ void Connection::ReadBody(ReadCallback _callback)
             else
             {
                 std::cout << "Error reading body: " << error_code.message() << "\n";
+                if (closeHandler)
+                {
+                    closeHandler(self);
+                }
             }
         }
     );
