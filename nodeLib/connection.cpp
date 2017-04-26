@@ -64,7 +64,6 @@ void Connection::Send(MessageVariant _message, WriteCallback _callback)
 {
     std::stringstream ss;
     boost::archive::text_oarchive oarchive(ss);
-    //boost::archive::binary_oarchive oarchive(ss);
     oarchive << _message;
 
     Message message(ss.str());
