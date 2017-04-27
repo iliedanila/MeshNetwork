@@ -45,8 +45,8 @@ public:
 
     void Close();
 
-    std::string RemoteIP() const { return socket.remote_endpoint().address().to_string(); }
-    unsigned short RemotePort() const { return socket.remote_endpoint().port(); }
+    std::string RemoteIP() const { return remoteIP; }
+    unsigned short RemotePort() const { return remotePort; }
 
     bool ReconnectIfClosed() const { return reconnect; }
     
@@ -60,6 +60,9 @@ private:
     tcp::socket socket;
     bool reconnect;
     std::function<void(std::shared_ptr<Connection>)> closeHandler;
+
+    std::string remoteIP;
+    unsigned short remotePort;
     
     Node& node;
     Message readMessage;

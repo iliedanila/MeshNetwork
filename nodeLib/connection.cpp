@@ -21,6 +21,8 @@ Connection::Connection(
     socket(std::move(_socket)),
     reconnect(_reconnect),
     closeHandler(_closeHandler),
+    remoteIP(socket.remote_endpoint().address().to_string()),
+    remotePort(socket.remote_endpoint().port()),
     node(_node)
 {
 }

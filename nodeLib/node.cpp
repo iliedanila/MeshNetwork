@@ -202,9 +202,6 @@ void Node::CloseConnection(SharedConnection connectionDown)
         nodeDistances.erase(nodeName);
     }
 
-    auto remoteIP = connectionDown->RemoteIP();
-    auto remotePort = connectionDown->RemotePort();
-
     connectionDown->Close();
     connections.erase(connectionDown);
     
@@ -229,7 +226,7 @@ void Node::CloseConnection(SharedConnection connectionDown)
 
     if (connectionDown->ReconnectIfClosed())
     {
-        Connect(remoteIP, remotePort, true);
+        Connect(connectionDown->RemoteIP(), connectionDown->RemotePort(), true);
     }
 }
 
