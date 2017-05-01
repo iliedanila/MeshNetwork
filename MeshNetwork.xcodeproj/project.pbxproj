@@ -7,36 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4B6AD8B31EAFD15D00533C26 /* handshake.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B6AD8B11EAFD15D00533C26 /* handshake.hpp */; };
-		4B6AD8B41EAFD15D00533C26 /* handshakeReply.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B6AD8B21EAFD15D00533C26 /* handshakeReply.hpp */; };
-		4B9C26621EAC17490091D75C /* logMessage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B9C26601EAC17490091D75C /* logMessage.hpp */; };
-		4B9C26631EAC17490091D75C /* message.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B9C26611EAC17490091D75C /* message.hpp */; };
-		4BE9100A1DE1F2AC004A39C2 /* allMessages.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4BE910011DE1F2AC004A39C2 /* allMessages.hpp */; };
-		4BE9100C1DE1F2AC004A39C2 /* connection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4BE910031DE1F2AC004A39C2 /* connection.cpp */; };
-		4BE9100D1DE1F2AC004A39C2 /* connection.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4BE910041DE1F2AC004A39C2 /* connection.hpp */; };
-		4BE9100E1DE1F2AC004A39C2 /* dataMessage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4BE910051DE1F2AC004A39C2 /* dataMessage.hpp */; };
-		4BE9100F1DE1F2AC004A39C2 /* messageVisitor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4BE910061DE1F2AC004A39C2 /* messageVisitor.hpp */; };
-		4BE910101DE1F2AC004A39C2 /* node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4BE910071DE1F2AC004A39C2 /* node.cpp */; };
-		4BE910111DE1F2AC004A39C2 /* node.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4BE910081DE1F2AC004A39C2 /* node.hpp */; };
-		4BE910121DE1F2AC004A39C2 /* routingMessage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4BE910091DE1F2AC004A39C2 /* routingMessage.hpp */; };
+		4B983E2D1EB7CFFC0047D433 /* allMessages.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E1F1EB7CFFC0047D433 /* allMessages.hpp */; };
+		4B983E2E1EB7CFFC0047D433 /* connection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B983E201EB7CFFC0047D433 /* connection.cpp */; };
+		4B983E2F1EB7CFFC0047D433 /* connection.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E211EB7CFFC0047D433 /* connection.hpp */; };
+		4B983E301EB7CFFC0047D433 /* dataMessage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E221EB7CFFC0047D433 /* dataMessage.hpp */; };
+		4B983E311EB7CFFC0047D433 /* dataMessageAck.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E231EB7CFFC0047D433 /* dataMessageAck.hpp */; };
+		4B983E321EB7CFFC0047D433 /* handshake.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E241EB7CFFC0047D433 /* handshake.hpp */; };
+		4B983E331EB7CFFC0047D433 /* handshakeReply.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E251EB7CFFC0047D433 /* handshakeReply.hpp */; };
+		4B983E341EB7CFFC0047D433 /* logMessage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E261EB7CFFC0047D433 /* logMessage.hpp */; };
+		4B983E351EB7CFFC0047D433 /* message.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E271EB7CFFC0047D433 /* message.hpp */; };
+		4B983E361EB7CFFC0047D433 /* messageVisitor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E281EB7CFFC0047D433 /* messageVisitor.hpp */; };
+		4B983E371EB7CFFC0047D433 /* node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B983E291EB7CFFC0047D433 /* node.cpp */; };
+		4B983E381EB7CFFC0047D433 /* node.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E2A1EB7CFFC0047D433 /* node.hpp */; };
+		4B983E391EB7CFFC0047D433 /* routingMessage.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E2B1EB7CFFC0047D433 /* routingMessage.hpp */; };
+		4B983E3A1EB7CFFC0047D433 /* sendError.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4B983E2C1EB7CFFC0047D433 /* sendError.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4B036FC81DE2413600EA851C /* dataMessageAck.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dataMessageAck.hpp; sourceTree = "<group>"; };
 		4B042ABB1DE1B0F500E1C461 /* libnodeLib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libnodeLib.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		4B22A0C71DE2128700E876B3 /* sendError.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sendError.hpp; sourceTree = "<group>"; };
-		4B6AD8B11EAFD15D00533C26 /* handshake.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = handshake.hpp; sourceTree = "<group>"; };
-		4B6AD8B21EAFD15D00533C26 /* handshakeReply.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = handshakeReply.hpp; sourceTree = "<group>"; };
-		4B9C26601EAC17490091D75C /* logMessage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = logMessage.hpp; sourceTree = "<group>"; };
-		4B9C26611EAC17490091D75C /* message.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = message.hpp; sourceTree = "<group>"; };
-		4BE910011DE1F2AC004A39C2 /* allMessages.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = allMessages.hpp; sourceTree = "<group>"; };
-		4BE910031DE1F2AC004A39C2 /* connection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = connection.cpp; sourceTree = "<group>"; };
-		4BE910041DE1F2AC004A39C2 /* connection.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = connection.hpp; sourceTree = "<group>"; };
-		4BE910051DE1F2AC004A39C2 /* dataMessage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dataMessage.hpp; sourceTree = "<group>"; };
-		4BE910061DE1F2AC004A39C2 /* messageVisitor.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = messageVisitor.hpp; sourceTree = "<group>"; };
-		4BE910071DE1F2AC004A39C2 /* node.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = node.cpp; sourceTree = "<group>"; };
-		4BE910081DE1F2AC004A39C2 /* node.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = node.hpp; sourceTree = "<group>"; };
-		4BE910091DE1F2AC004A39C2 /* routingMessage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = routingMessage.hpp; sourceTree = "<group>"; };
+		4B983E1F1EB7CFFC0047D433 /* allMessages.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = allMessages.hpp; path = src/allMessages.hpp; sourceTree = "<group>"; };
+		4B983E201EB7CFFC0047D433 /* connection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = connection.cpp; path = src/connection.cpp; sourceTree = "<group>"; };
+		4B983E211EB7CFFC0047D433 /* connection.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = connection.hpp; path = src/connection.hpp; sourceTree = "<group>"; };
+		4B983E221EB7CFFC0047D433 /* dataMessage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = dataMessage.hpp; path = src/dataMessage.hpp; sourceTree = "<group>"; };
+		4B983E231EB7CFFC0047D433 /* dataMessageAck.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = dataMessageAck.hpp; path = src/dataMessageAck.hpp; sourceTree = "<group>"; };
+		4B983E241EB7CFFC0047D433 /* handshake.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = handshake.hpp; path = src/handshake.hpp; sourceTree = "<group>"; };
+		4B983E251EB7CFFC0047D433 /* handshakeReply.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = handshakeReply.hpp; path = src/handshakeReply.hpp; sourceTree = "<group>"; };
+		4B983E261EB7CFFC0047D433 /* logMessage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = logMessage.hpp; path = src/logMessage.hpp; sourceTree = "<group>"; };
+		4B983E271EB7CFFC0047D433 /* message.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = message.hpp; path = src/message.hpp; sourceTree = "<group>"; };
+		4B983E281EB7CFFC0047D433 /* messageVisitor.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = messageVisitor.hpp; path = src/messageVisitor.hpp; sourceTree = "<group>"; };
+		4B983E291EB7CFFC0047D433 /* node.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = node.cpp; path = src/node.cpp; sourceTree = "<group>"; };
+		4B983E2A1EB7CFFC0047D433 /* node.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = node.hpp; path = src/node.hpp; sourceTree = "<group>"; };
+		4B983E2B1EB7CFFC0047D433 /* routingMessage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = routingMessage.hpp; path = src/routingMessage.hpp; sourceTree = "<group>"; };
+		4B983E2C1EB7CFFC0047D433 /* sendError.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = sendError.hpp; path = src/sendError.hpp; sourceTree = "<group>"; };
 		4BE910181DE1F4F5004A39C2 /* libboost_serialization.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_serialization.a; path = ../../boost/lib/libboost_serialization.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -54,7 +56,7 @@
 		4B042AB21DE1B0F400E1C461 = {
 			isa = PBXGroup;
 			children = (
-				4B042ABD1DE1B0F500E1C461 /* nodeLib */,
+				4B983E1E1EB7CFEA0047D433 /* MeshNetwork */,
 				4B042ABC1DE1B0F500E1C461 /* Products */,
 				4BE910171DE1F4F4004A39C2 /* Frameworks */,
 			);
@@ -68,25 +70,25 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		4B042ABD1DE1B0F500E1C461 /* nodeLib */ = {
+		4B983E1E1EB7CFEA0047D433 /* MeshNetwork */ = {
 			isa = PBXGroup;
 			children = (
-				4B6AD8B11EAFD15D00533C26 /* handshake.hpp */,
-				4B6AD8B21EAFD15D00533C26 /* handshakeReply.hpp */,
-				4B9C26601EAC17490091D75C /* logMessage.hpp */,
-				4B9C26611EAC17490091D75C /* message.hpp */,
-				4BE910011DE1F2AC004A39C2 /* allMessages.hpp */,
-				4BE910031DE1F2AC004A39C2 /* connection.cpp */,
-				4BE910041DE1F2AC004A39C2 /* connection.hpp */,
-				4BE910051DE1F2AC004A39C2 /* dataMessage.hpp */,
-				4B036FC81DE2413600EA851C /* dataMessageAck.hpp */,
-				4BE910061DE1F2AC004A39C2 /* messageVisitor.hpp */,
-				4BE910071DE1F2AC004A39C2 /* node.cpp */,
-				4BE910081DE1F2AC004A39C2 /* node.hpp */,
-				4BE910091DE1F2AC004A39C2 /* routingMessage.hpp */,
-				4B22A0C71DE2128700E876B3 /* sendError.hpp */,
+				4B983E1F1EB7CFFC0047D433 /* allMessages.hpp */,
+				4B983E201EB7CFFC0047D433 /* connection.cpp */,
+				4B983E211EB7CFFC0047D433 /* connection.hpp */,
+				4B983E221EB7CFFC0047D433 /* dataMessage.hpp */,
+				4B983E231EB7CFFC0047D433 /* dataMessageAck.hpp */,
+				4B983E241EB7CFFC0047D433 /* handshake.hpp */,
+				4B983E251EB7CFFC0047D433 /* handshakeReply.hpp */,
+				4B983E261EB7CFFC0047D433 /* logMessage.hpp */,
+				4B983E271EB7CFFC0047D433 /* message.hpp */,
+				4B983E281EB7CFFC0047D433 /* messageVisitor.hpp */,
+				4B983E291EB7CFFC0047D433 /* node.cpp */,
+				4B983E2A1EB7CFFC0047D433 /* node.hpp */,
+				4B983E2B1EB7CFFC0047D433 /* routingMessage.hpp */,
+				4B983E2C1EB7CFFC0047D433 /* sendError.hpp */,
 			);
-			path = nodeLib;
+			name = MeshNetwork;
 			sourceTree = "<group>";
 		};
 		4BE910171DE1F4F4004A39C2 /* Frameworks */ = {
@@ -104,16 +106,18 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4BE9100D1DE1F2AC004A39C2 /* connection.hpp in Headers */,
-				4B6AD8B41EAFD15D00533C26 /* handshakeReply.hpp in Headers */,
-				4BE910111DE1F2AC004A39C2 /* node.hpp in Headers */,
-				4B9C26621EAC17490091D75C /* logMessage.hpp in Headers */,
-				4BE9100E1DE1F2AC004A39C2 /* dataMessage.hpp in Headers */,
-				4BE9100A1DE1F2AC004A39C2 /* allMessages.hpp in Headers */,
-				4B6AD8B31EAFD15D00533C26 /* handshake.hpp in Headers */,
-				4BE9100F1DE1F2AC004A39C2 /* messageVisitor.hpp in Headers */,
-				4B9C26631EAC17490091D75C /* message.hpp in Headers */,
-				4BE910121DE1F2AC004A39C2 /* routingMessage.hpp in Headers */,
+				4B983E2F1EB7CFFC0047D433 /* connection.hpp in Headers */,
+				4B983E361EB7CFFC0047D433 /* messageVisitor.hpp in Headers */,
+				4B983E301EB7CFFC0047D433 /* dataMessage.hpp in Headers */,
+				4B983E341EB7CFFC0047D433 /* logMessage.hpp in Headers */,
+				4B983E311EB7CFFC0047D433 /* dataMessageAck.hpp in Headers */,
+				4B983E331EB7CFFC0047D433 /* handshakeReply.hpp in Headers */,
+				4B983E391EB7CFFC0047D433 /* routingMessage.hpp in Headers */,
+				4B983E2D1EB7CFFC0047D433 /* allMessages.hpp in Headers */,
+				4B983E351EB7CFFC0047D433 /* message.hpp in Headers */,
+				4B983E381EB7CFFC0047D433 /* node.hpp in Headers */,
+				4B983E321EB7CFFC0047D433 /* handshake.hpp in Headers */,
+				4B983E3A1EB7CFFC0047D433 /* sendError.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -152,7 +156,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 4B042AB61DE1B0F500E1C461 /* Build configuration list for PBXProject "nodeLib" */;
+			buildConfigurationList = 4B042AB61DE1B0F500E1C461 /* Build configuration list for PBXProject "MeshNetwork" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -174,8 +178,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4BE9100C1DE1F2AC004A39C2 /* connection.cpp in Sources */,
-				4BE910101DE1F2AC004A39C2 /* node.cpp in Sources */,
+				4B983E2E1EB7CFFC0047D433 /* connection.cpp in Sources */,
+				4B983E371EB7CFFC0047D433 /* node.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,7 +298,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4B042AB61DE1B0F500E1C461 /* Build configuration list for PBXProject "nodeLib" */ = {
+		4B042AB61DE1B0F500E1C461 /* Build configuration list for PBXProject "MeshNetwork" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4B042AC41DE1B0F500E1C461 /* Debug */,
