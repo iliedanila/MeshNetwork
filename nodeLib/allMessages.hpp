@@ -19,7 +19,6 @@ typedef boost::variant<
     LogMessage,
     Handshake,
     HandshakeReply> MessageVariant;
-    
 }
 
 #endif /* allMessages_h */
