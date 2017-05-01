@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="nodeLib" Version="10.0.0" InternalType="Library">
+<CodeLite_Project Name="MeshNetwork" Version="10.0.0" InternalType="Library">
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
@@ -8,21 +8,22 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="nodeLib/connection.cpp"/>
-    <File Name="nodeLib/node.cpp"/>
+    <File Name="src/connection.cpp"/>
+    <File Name="src/node.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
-    <File Name="nodeLib/allMessages.hpp"/>
-    <File Name="nodeLib/connection.hpp"/>
-    <File Name="nodeLib/dataMessage.hpp"/>
-    <File Name="nodeLib/dataMessageAck.hpp"/>
-    <File Name="nodeLib/message.hpp"/>
-    <File Name="nodeLib/messageVisitor.hpp"/>
-    <File Name="nodeLib/routingMessage.hpp"/>
-    <File Name="nodeLib/node.hpp"/>
-    <File Name="nodeLib/logMessage.hpp"/>
-    <File Name="nodeLib/handshake.hpp"/>
-    <File Name="nodeLib/handshakeReply.hpp"/>
+    <File Name="src/allMessages.hpp"/>
+    <File Name="src/connection.hpp"/>
+    <File Name="src/dataMessage.hpp"/>
+    <File Name="src/dataMessageAck.hpp"/>
+    <File Name="src/handshake.hpp"/>
+    <File Name="src/handshakeReply.hpp"/>
+    <File Name="src/logMessage.hpp"/>
+    <File Name="src/message.hpp"/>
+    <File Name="src/messageVisitor.hpp"/>
+    <File Name="src/node.hpp"/>
+    <File Name="src/routingMessage.hpp"/>
+    <File Name="src/sendError.hpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

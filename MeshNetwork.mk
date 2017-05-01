@@ -2,18 +2,18 @@
 ## Auto Generated makefile by CodeLite IDE
 ## any manual changes will be erased      
 ##
-## Release
-ProjectName            :=nodeLib
-ConfigurationName      :=Release
-WorkspacePath          :=/home/ilie/workspace/nodes
-ProjectPath            :=/home/ilie/workspace/nodes/nodeLib
-IntermediateDirectory  :=./Release
+## Debug
+ProjectName            :=MeshNetwork
+ConfigurationName      :=Debug
+WorkspacePath          :=/home/ilie/workspace/PubSub
+ProjectPath            :=/home/ilie/workspace/PubSub/MeshNetwork
+IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Ilie Danila
-Date                   :=28/04/17
+Date                   :=01/05/17
 CodeLitePath           :=/home/ilie/.codelite
 LinkerName             :=/usr/bin/clang++
 SharedObjectLinkerName :=/usr/bin/clang++ -shared -fPIC
@@ -32,7 +32,7 @@ Preprocessors          :=
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
 PreprocessOnlySwitch   :=-E
-ObjectsFileList        :="nodeLib.txt"
+ObjectsFileList        :="MeshNetwork.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  
@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /usr/bin/llvm-ar rcu
 CXX      := /usr/bin/clang++
 CC       := /usr/bin/clang
-CXXFLAGS :=  -std=c++14  $(Preprocessors)
-CFLAGS   :=   $(Preprocessors)
+CXXFLAGS :=  -g -std=c++14  $(Preprocessors)
+CFLAGS   :=  -g $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/llvm-as
 
@@ -60,7 +60,7 @@ AS       := /usr/bin/llvm-as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix) $(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_node.cpp$(ObjectSuffix) 
 
 
 
@@ -77,15 +77,15 @@ $(OutputFile): $(Objects)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
 	$(AR) $(ArchiveOutputSwitch)$(OutputFile) @$(ObjectsFileList) $(ArLibs)
-	@$(MakeDirCommand) "/home/ilie/workspace/nodes/.build-release"
-	@echo rebuilt > "/home/ilie/workspace/nodes/.build-release/nodeLib"
+	@$(MakeDirCommand) "/home/ilie/workspace/PubSub/.build-debug"
+	@echo rebuilt > "/home/ilie/workspace/PubSub/.build-debug/MeshNetwork"
 
 MakeIntermediateDirs:
-	@test -d ./Release || $(MakeDirCommand) ./Release
+	@test -d ./Debug || $(MakeDirCommand) ./Debug
 
 
-./Release:
-	@test -d ./Release || $(MakeDirCommand) ./Release
+./Debug:
+	@test -d ./Debug || $(MakeDirCommand) ./Debug
 
 PreBuild:
 
@@ -93,21 +93,21 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix): nodeLib/connection.cpp $(IntermediateDirectory)/nodeLib_connection.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/nodes/nodeLib/nodeLib/connection.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/nodeLib_connection.cpp$(DependSuffix): nodeLib/connection.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/nodeLib_connection.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/nodeLib_connection.cpp$(DependSuffix) -MM nodeLib/connection.cpp
+$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix): src/connection.cpp $(IntermediateDirectory)/src_connection.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/PubSub/MeshNetwork/src/connection.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_connection.cpp$(DependSuffix): src/connection.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_connection.cpp$(DependSuffix) -MM src/connection.cpp
 
-$(IntermediateDirectory)/nodeLib_connection.cpp$(PreprocessSuffix): nodeLib/connection.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/nodeLib_connection.cpp$(PreprocessSuffix) nodeLib/connection.cpp
+$(IntermediateDirectory)/src_connection.cpp$(PreprocessSuffix): src/connection.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_connection.cpp$(PreprocessSuffix) src/connection.cpp
 
-$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix): nodeLib/node.cpp $(IntermediateDirectory)/nodeLib_node.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/nodes/nodeLib/nodeLib/node.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/nodeLib_node.cpp$(DependSuffix): nodeLib/node.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/nodeLib_node.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/nodeLib_node.cpp$(DependSuffix) -MM nodeLib/node.cpp
+$(IntermediateDirectory)/src_node.cpp$(ObjectSuffix): src/node.cpp $(IntermediateDirectory)/src_node.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/PubSub/MeshNetwork/src/node.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_node.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_node.cpp$(DependSuffix): src/node.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_node.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_node.cpp$(DependSuffix) -MM src/node.cpp
 
-$(IntermediateDirectory)/nodeLib_node.cpp$(PreprocessSuffix): nodeLib/node.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/nodeLib_node.cpp$(PreprocessSuffix) nodeLib/node.cpp
+$(IntermediateDirectory)/src_node.cpp$(PreprocessSuffix): src/node.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_node.cpp$(PreprocessSuffix) src/node.cpp
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
@@ -115,6 +115,6 @@ $(IntermediateDirectory)/nodeLib_node.cpp$(PreprocessSuffix): nodeLib/node.cpp
 ## Clean
 ##
 clean:
-	$(RM) -r ./Release/
+	$(RM) -r ./Debug/
 
 
