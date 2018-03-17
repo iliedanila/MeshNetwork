@@ -2,18 +2,18 @@
 ## Auto Generated makefile by CodeLite IDE
 ## any manual changes will be erased      
 ##
-## Debug
+## Release
 ProjectName            :=MeshNetwork
-ConfigurationName      :=Debug
-WorkspacePath          :=/home/ilie/workspace/PubSub
-ProjectPath            :=/home/ilie/workspace/PubSub/MeshNetwork
-IntermediateDirectory  :=./Debug
+ConfigurationName      :=Release
+WorkspacePath          :=/home/ilie/workspace/AsyncPubSub
+ProjectPath            :=/home/ilie/workspace/AsyncPubSub/MeshNetwork
+IntermediateDirectory  :=./Release
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Ilie Danila
-Date                   :=01/05/17
+Date                   :=28/10/17
 CodeLitePath           :=/home/ilie/.codelite
 LinkerName             :=/usr/bin/clang++
 SharedObjectLinkerName :=/usr/bin/clang++ -shared -fPIC
@@ -36,7 +36,7 @@ ObjectsFileList        :="MeshNetwork.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)/usr/include 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)../boost/inc 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /usr/bin/llvm-ar rcu
 CXX      := /usr/bin/clang++
 CC       := /usr/bin/clang
-CXXFLAGS :=  -g -std=c++14  $(Preprocessors)
-CFLAGS   :=  -g $(Preprocessors)
+CXXFLAGS :=  -std=c++14  $(Preprocessors)
+CFLAGS   :=   $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/llvm-as
 
@@ -77,15 +77,15 @@ $(OutputFile): $(Objects)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
 	$(AR) $(ArchiveOutputSwitch)$(OutputFile) @$(ObjectsFileList) $(ArLibs)
-	@$(MakeDirCommand) "/home/ilie/workspace/PubSub/.build-debug"
-	@echo rebuilt > "/home/ilie/workspace/PubSub/.build-debug/MeshNetwork"
+	@$(MakeDirCommand) "/home/ilie/workspace/AsyncPubSub/.build-release"
+	@echo rebuilt > "/home/ilie/workspace/AsyncPubSub/.build-release/MeshNetwork"
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./Release || $(MakeDirCommand) ./Release
 
 
-./Debug:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+./Release:
+	@test -d ./Release || $(MakeDirCommand) ./Release
 
 PreBuild:
 
@@ -94,7 +94,7 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix): src/connection.cpp $(IntermediateDirectory)/src_connection.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/PubSub/MeshNetwork/src/connection.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/AsyncPubSub/MeshNetwork/src/connection.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_connection.cpp$(DependSuffix): src/connection.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_connection.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_connection.cpp$(DependSuffix) -MM src/connection.cpp
 
@@ -102,7 +102,7 @@ $(IntermediateDirectory)/src_connection.cpp$(PreprocessSuffix): src/connection.c
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_connection.cpp$(PreprocessSuffix) src/connection.cpp
 
 $(IntermediateDirectory)/src_node.cpp$(ObjectSuffix): src/node.cpp $(IntermediateDirectory)/src_node.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/PubSub/MeshNetwork/src/node.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_node.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/ilie/workspace/AsyncPubSub/MeshNetwork/src/node.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_node.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_node.cpp$(DependSuffix): src/node.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_node.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_node.cpp$(DependSuffix) -MM src/node.cpp
 
@@ -115,6 +115,6 @@ $(IntermediateDirectory)/src_node.cpp$(PreprocessSuffix): src/node.cpp
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./Release/
 
 

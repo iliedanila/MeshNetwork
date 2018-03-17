@@ -153,7 +153,7 @@ void Node::SndMessage(
         auto namePath = nodePaths.find(destination);
         auto connection = namePath->second;
         
-        auto messageID = std::hash<std::string>{}(data);
+        std::size_t messageID = std::hash<std::string>{}(data);
         DataMessage message(name, destination, data, messageID);
         
         connection->Send(

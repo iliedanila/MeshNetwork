@@ -101,7 +101,7 @@ private:
     std::map<std::string, uint32_t> nodeDistances;
     std::pair<std::string, uint32_t> loggerDistance;
     std::map<std::string, SharedConnection> nodePaths;
-    std::unordered_map<uint32_t, AckMessageCallback> ackCallbacks;
+    std::unordered_map<std::size_t, AckMessageCallback> ackCallbacks;
     
     std::unique_ptr<tcp::acceptor> acceptor;
     

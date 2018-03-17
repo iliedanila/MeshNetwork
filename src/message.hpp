@@ -25,7 +25,7 @@ namespace NetworkLayer
 
         char* GetHeader() { return header; }
         auto& GetBody() { return body; }
-        uint32_t GetBodySize() const { return bodySize; }
+        std::size_t GetBodySize() const { return bodySize; }
 
         void CreateOutputBuffer()
         {
@@ -49,7 +49,7 @@ namespace NetworkLayer
         }
 
     private:
-        uint32_t bodySize;
+        std::size_t bodySize;
         char header[eHeaderLength + 1];
         std::vector<char> body;
         std::vector<char> outputBuffer;
