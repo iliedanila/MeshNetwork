@@ -1,5 +1,5 @@
-Debug/
+.vscode/
+build/
 
-nodeLib\.txt
 
-Release/
+\.DS_Store
