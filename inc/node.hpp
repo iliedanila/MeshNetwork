@@ -111,7 +111,7 @@ private:
     
     tcp::socket connect_socket;
     tcp::socket accept_socket;
-    io_service& ioservice;
+    io_context& ioservice;
     bool isLogger;
 };
     

@@ -69,13 +69,13 @@ void Node::Connect(
     bool reconnect)
 {
     tcp::resolver resolver(ioservice);
-    auto endpoint = resolver.resolve({host, std::to_string(port)});
+    auto endpoint = resolver.resolve(host, std::to_string(port));
     
     boost::asio::async_connect(
         connect_socket,
         endpoint,
         [this, reconnect, host, port]
-        (const boost::system::error_code& error, tcp::resolver::iterator)
+        (const boost::system::error_code& error, tcp::endpoint)
         {
             if (!error)
             {
