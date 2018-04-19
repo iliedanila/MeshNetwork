@@ -35,9 +35,6 @@ void Connection::Write()
 {
     auto self(shared_from_this());
 
-    std::string output(writeMessages.front().first.GetOutputBuffer().begin(), writeMessages.front().first.GetOutputBuffer().end());
-    std::cout << "Write message: " << output << '\n';
-
     boost::asio::async_write(
         socket,
         buffer(
@@ -130,7 +127,6 @@ void Connection::ReadBody(ReadCallback _callback)
             if (!error_code)
             {
                 std::string content(readMessage.GetBody().begin(), readMessage.GetBody().end());
-                std::cout << "Read message: " << content << '\n';
                 std::stringstream ss(content);
                 boost::archive::text_iarchive iarchive(ss);
 
