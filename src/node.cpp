@@ -304,8 +304,6 @@ void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
     ProcessFailedNodes(_message, reply, forward, _connection);
     ProcessLogger(_message, reply, forward);
 
-
-    
     if (reply.NodeDistances().size() > 0 ||
         reply.FailedNodes().size() > 0 ||
         reply.LoggerDistance().first != "")
