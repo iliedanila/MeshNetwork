@@ -39,22 +39,22 @@ public:
 
     ~Connection();
     
-    void Read(ReadCallback _callback);
+    void read(ReadCallback _callback);
     
-    void Send(MessageVariant, WriteCallback);
+    void send(MessageVariant, WriteCallback);
 
-    void Close();
+    void close();
 
-    std::string RemoteIP() const { return remoteIP; }
-    unsigned short RemotePort() const { return remotePort; }
+    std::string getRemoteIP() const { return remoteIP; }
+    uint16_t getRemotePort() const { return remotePort; }
 
-    bool ReconnectIfClosed() const { return reconnect; }
+    bool getReconnect() const { return reconnect; }
     
 private:
-    void Write();
+    void write();
 
-    void ReadHeader(ReadCallback _callback);
-    void ReadBody(ReadCallback _callback);
+    void readHeader(ReadCallback readCallback);
+    void readBody(ReadCallback readCallback);
 
     io_service& ioservice;
     tcp::socket socket;
@@ -62,7 +62,7 @@ private:
     std::function<void(std::shared_ptr<Connection>)> closeHandler;
 
     std::string remoteIP;
-    unsigned short remotePort;
+    uint16_t remotePort;
     
     Node& node;
     Message readMessage;

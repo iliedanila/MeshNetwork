@@ -15,21 +15,21 @@ public:
     RoutingMessage() {}
     ~RoutingMessage() {}
     
-    auto NodeDistances() { return nodeDistances; }
-    auto FailedNodes() { return failedNodes; }
-    auto LoggerDistance() { return loggerDistance; }
+    auto getNodeDistances() { return nodeDistances; }
+    auto getFailedNodes() { return failedNodes; }
+    auto getLoggerDistance() { return loggerDistance; }
     
-    void AddNodeDistance(std::pair<std::string, uint32_t> _nodeDistance)
+    void addNodeDistance(std::pair<std::string, uint32_t> _nodeDistance)
     {
         nodeDistances.insert(_nodeDistance);
     }
     
-    void AddFailedNode(std::string node)
+    void addFailedNode(std::string node)
     {
         failedNodes.push_back(node);
     }
 
-    void AddLogger(std::pair<std::string, uint32_t> _loggerDistance)
+    void addLogger(std::pair<std::string, uint32_t> _loggerDistance)
     {
         loggerDistance = _loggerDistance;
     }

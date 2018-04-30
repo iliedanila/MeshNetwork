@@ -27,10 +27,10 @@ public:
         messageID(_messageID)
     {}
 
-    std::string Source() const { return sourceNodeName; }
-    std::string Buffer() const { return buffer; }
-    uint32_t Distance() const { return distance; }
-    uint64_t MessageID() const { return messageID; }
+    std::string getSourceNodeName() const { return sourceNodeName; }
+    std::string getBuffer() const { return buffer; }
+    uint32_t getDistance() const { return distance; }
+    uint64_t getMessageID() const { return messageID; }
 
 private:
     friend class boost::serialization::access;
