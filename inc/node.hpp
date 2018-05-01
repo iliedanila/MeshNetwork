@@ -75,7 +75,7 @@ private:
             const boost::system::error_code &error);
     
     template <typename MessageT>
-    void HandleMessage(MessageT&, SharedConnection);
+    void handleMessage(MessageT &, SharedConnection);
     
     void processAddNodePaths(
             RoutingMessage &message,

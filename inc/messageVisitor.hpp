@@ -19,7 +19,7 @@ struct MessageVisitor : public boost::static_visitor<>
     template <typename MessageT>
     void operator()(MessageT& message) const
     {
-        node.HandleMessage(message, connection);
+        node.handleMessage(message, connection);
     }
     
 private:

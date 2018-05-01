@@ -295,7 +295,7 @@ void Node::onReconnectTimer(
 }
 
     template <>
-void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
+void Node::handleMessage(RoutingMessage& _message, SharedConnection _connection)
 {
     RoutingMessage reply;
     RoutingMessage forward;
@@ -342,7 +342,7 @@ void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
 }
 
 template<>
-void Node::HandleMessage(DataMessage& _message, SharedConnection _connection)
+void Node::handleMessage(DataMessage& _message, SharedConnection _connection)
 {
     _message.distance++;
 
@@ -414,7 +414,7 @@ void Node::HandleMessage(DataMessage& _message, SharedConnection _connection)
 }
     
 template<>
-void Node::HandleMessage(DataMessageAck& _message, SharedConnection _connection)
+void Node::handleMessage(DataMessageAck& _message, SharedConnection _connection)
 {
     if (_message.destinationNodeName == name)
     {
@@ -445,7 +445,7 @@ void Node::HandleMessage(DataMessageAck& _message, SharedConnection _connection)
 }
 
 template<>
-void Node::HandleMessage(LogMessage& _message, SharedConnection _connection)
+void Node::handleMessage(LogMessage& _message, SharedConnection _connection)
 {
     if (_message.getDestinationNodeName() == name)
     {
@@ -486,7 +486,7 @@ void Node::HandleMessage(LogMessage& _message, SharedConnection _connection)
 }
 
 template<>
-void Node::HandleMessage(Handshake& _message, SharedConnection _connection)
+void Node::handleMessage(Handshake& _message, SharedConnection _connection)
 {
     // this is the accepted connection.
     std::cout << name << ": connection with node " << _message.getNodeName() << " established.\n";
@@ -504,7 +504,7 @@ void Node::HandleMessage(Handshake& _message, SharedConnection _connection)
 }
 
 template<>
-void Node::HandleMessage(HandshakeReply& _message, SharedConnection _connection)
+void Node::handleMessage(HandshakeReply& _message, SharedConnection _connection)
 {
     // this is the connected connection.
     std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
