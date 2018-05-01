@@ -23,6 +23,7 @@ namespace NetworkLayer
 {
     
 typedef std::function<void(std::string, SendError)> AckMessageCallback;
+typedef std::function<void(std::string, bool)> NewNodeStatusCallbackT;
 
 class Node
 {
@@ -40,7 +41,7 @@ public:
     
     bool isNodeAccessible(const std::string &nodeName);
     
-    void notifyNewNodeStatus(std::function<void(std::string, bool)> callback);
+    void notifyNewNodeStatus(NewNodeStatusCallbackT callback);
     
     void sndMessage(
             std::string destination,
@@ -107,7 +108,7 @@ private:
     
     bool closing;
     std::function<void(DataMessage&)> messageAcceptor;
-    std::function<void(std::string, bool)> notifyNewNodeStatusCallback;
+    NewNodeStatusCallbackT notifyNewNodeStatusCallback;
     
     tcp::socket connect_socket;
     tcp::socket accept_socket;

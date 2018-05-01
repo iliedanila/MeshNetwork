@@ -496,24 +496,14 @@ void Node::handleMessage(Handshake& _message, SharedConnection _connection)
             sendRoutingToNewConnection(_connection);
         }
     });
-
-    if (notifyNewNodeStatusCallback)
-    {
-        notifyNewNodeStatusCallback(_message.getNodeName(), true);
-    }
 }
 
 template<>
 void Node::handleMessage(HandshakeReply& _message, SharedConnection _connection)
 {
     // this is the connected connection.
-    std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
+    std::cout << name << ": connection with node " << _message.getNodeName() << " established.\n";
     sendRoutingToNewConnection(_connection);
-
-    if (notifyNewNodeStatusCallback)
-    {
-        notifyNewNodeStatusCallback(_message.NodeName(), true);
-    }
 }
 
 void Node::processAddNodePaths(
@@ -536,7 +526,7 @@ void Node::processAddNodePaths(
             // notify node owner of new node accessible.
             if(notifyNewNodeStatusCallback)
             {
-                notifyNewNodeStatusCallback(nodeDistance.first, true);
+                ioservice.post(std::bind(notifyNewNodeStatusCallback, nodeDistance.first, true));
             }
         }
         else if (it->second > nodeDistance.second + 1)

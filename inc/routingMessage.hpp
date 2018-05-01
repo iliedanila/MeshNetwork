@@ -14,10 +14,10 @@ class RoutingMessage
 public:
     RoutingMessage() {}
     ~RoutingMessage() {}
-    
-    auto getNodeDistances() { return nodeDistances; }
-    auto getFailedNodes() { return failedNodes; }
-    auto getLoggerDistance() { return loggerDistance; }
+
+    std::map<std::string, uint32_t> getNodeDistances() { return nodeDistances; }
+    std::vector<std::string> getFailedNodes() { return failedNodes; }
+    std::pair<std::string, uint32_t> getLoggerDistance() { return loggerDistance; }
     
     void addNodeDistance(std::pair<std::string, uint32_t> _nodeDistance)
     {
