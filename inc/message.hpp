@@ -24,7 +24,7 @@ namespace NetworkLayer
         }
 
         char* getHeader() { return header; }
-        auto& getBody() { return body; }
+        std::vector<char>& getBody() { return body; }
         std::size_t getBodySize() const { return bodySize; }
 
         void createOutputBuffer()
@@ -37,7 +37,7 @@ namespace NetworkLayer
             outputBuffer.insert(outputBuffer.end(), body.begin(), body.end());
         }
 
-        auto& getOutputBuffer() { return outputBuffer; }
+        std::vector<char>& getOutputBuffer() { return outputBuffer; }
 
         void decodeHeader()
         {
