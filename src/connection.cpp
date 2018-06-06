@@ -31,18 +31,15 @@ Connection::~Connection()
 {
 }
 
-void Connection::Write()
+void Connection::write()
 {
     auto self(shared_from_this());
-
-    std::string output(writeMessages.front().first.GetOutputBuffer().begin(), writeMessages.front().first.GetOutputBuffer().end());
-    std::cout << "Write message: " << output << '\n';
 
     boost::asio::async_write(
         socket,
         buffer(
-            writeMessages.front().first.GetOutputBuffer(),
-            writeMessages.front().first.GetOutputBuffer().size()
+                writeMessages.front().first.getOutputBuffer(),
+            writeMessages.front().first.getOutputBuffer().size()
         ),
         [this, self]
         (boost::system::error_code error, uint32_t /*lenght*/)
@@ -55,55 +52,55 @@ void Connection::Write()
                 writeMessages.pop_front();
                 if(!writeMessages.empty())
                 {
-                    Write();
+                    write();
                 }
             }
         }
     );
 }
 
-void Connection::Read(ReadCallback _callback)
+void Connection::read(ReadCallback _callback)
 {
-    ReadHeader(_callback);
+    readHeader(_callback);
 }
 
-void Connection::Send(MessageVariant _message, WriteCallback _callback)
+void Connection::send(MessageVariant _message, WriteCallback _callback)
 {
     std::stringstream ss;
     boost::archive::text_oarchive oarchive(ss);
     oarchive << _message;
 
     Message message(ss.str());
-    message.CreateOutputBuffer();
+    message.createOutputBuffer();
 
     auto writeInProgress = !writeMessages.empty();
     writeMessages.push_back(std::make_pair(message, _callback));
 
     if (!writeInProgress)
     {
-        Write();
+        write();
     }
 }
 
-void Connection::Close()
+void Connection::close()
 {
     socket.close();
 }
 
-void Connection::ReadHeader(ReadCallback _callback)
+void Connection::readHeader(ReadCallback _callback)
 {
     auto self(shared_from_this());
 
     boost::asio::async_read(
         socket,
-        buffer(readMessage.GetHeader(), Message::eHeaderLength),
+        buffer(readMessage.getHeader(), Message::eHeaderLength),
         [this, self, _callback]
         (boost::system::error_code error_code, uint32_t length)
         {
             if(!error_code)
             {
-                readMessage.DecodeHeader();
-                ReadBody(_callback);
+                readMessage.decodeHeader();
+                readBody(_callback);
             }
             else
             {
@@ -117,20 +114,19 @@ void Connection::ReadHeader(ReadCallback _callback)
     );
 }
 
-void Connection::ReadBody(ReadCallback _callback)
+void Connection::readBody(ReadCallback _callback)
 {
     auto self(shared_from_this());
 
     boost::asio::async_read(
         socket,
-        buffer(readMessage.GetBody(), readMessage.GetBodySize()),
+        buffer(readMessage.getBody(), readMessage.getBodySize()),
         [this, self, _callback]
         (boost::system::error_code error_code, uint32_t /*length*/)
         {
             if (!error_code)
             {
-                std::string content(readMessage.GetBody().begin(), readMessage.GetBody().end());
-                std::cout << "Read message: " << content << '\n';
+                std::string content(readMessage.getBody().begin(), readMessage.getBody().end());
                 std::stringstream ss(content);
                 boost::archive::text_iarchive iarchive(ss);
 
@@ -138,7 +134,7 @@ void Connection::ReadBody(ReadCallback _callback)
                 iarchive >> message;
 
                 _callback(message, self);
-                ReadHeader(_callback);
+                readHeader(_callback);
             }
             else
             {

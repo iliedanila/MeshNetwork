@@ -31,7 +31,7 @@ Node::Node(
 Node::~Node()
 {}
 
-void Node::Accept(unsigned short _port)
+void Node::accept(unsigned short _port)
 {
     tcp::endpoint endpoint(tcp::v4(), _port);
     
@@ -47,9 +47,9 @@ void Node::Accept(unsigned short _port)
         {
             if (!error)
             {
-                auto connection = AddConnection(std::move(accept_socket), false);
-                    
-                StartConnection(connection, Connection::eAccepted);
+                auto connection = addConnection(std::move(accept_socket), false);
+
+                startConnection(connection, Connection::eAccepted);
             }
             else
             {
@@ -58,30 +58,30 @@ void Node::Accept(unsigned short _port)
             }
             if(!closing)
             {
-                Accept(_port);
+                accept(_port);
             }
         });
 }
 
-void Node::Connect(
-    std::string host,
-    unsigned short port,
-    bool reconnect)
+void Node::connect(
+        std::string host,
+        unsigned short port,
+        bool reconnect)
 {
     tcp::resolver resolver(ioservice);
-    auto endpoint = resolver.resolve({host, std::to_string(port)});
+    auto endpoint = resolver.resolve(host, std::to_string(port));
     
     boost::asio::async_connect(
         connect_socket,
         endpoint,
         [this, reconnect, host, port]
-        (const boost::system::error_code& error, tcp::resolver::iterator)
+        (const boost::system::error_code& error, tcp::endpoint)
         {
             if (!error)
             {
-                auto connection = AddConnection(std::move(connect_socket), reconnect);
+                auto connection = addConnection(std::move(connect_socket), reconnect);
 
-                StartConnection(connection, Connection::eConnected);
+                startConnection(connection, Connection::eConnected);
             }
             else
             {
@@ -98,7 +98,7 @@ void Node::Connect(
                         ioservice);
                     reconnectTimer->expires_from_now(boost::posix_time::seconds(1));
                     reconnectTimer->async_wait(std::bind(
-                        &Node::OnReconnectTimer,
+                            &Node::onReconnectTimer,
                         this,
                         reconnectTimer,
                         host,
@@ -110,12 +110,12 @@ void Node::Connect(
         });
 }
 
-void Node::Close()
+void Node::close()
 {
     closing = true;
     for (auto connection : connections)
     {
-        connection->Close();
+        connection->close();
     }
     if (acceptor)
     {
@@ -123,7 +123,7 @@ void Node::Close()
     }
 }
 
-std::vector<std::string> Node::GetAccessibleNodes()
+std::vector<std::string> Node::getAccessibleNodes()
 {
     std::vector<std::string> nodeList;
     for ( auto keyValue : nodeDistances )
@@ -133,37 +133,37 @@ std::vector<std::string> Node::GetAccessibleNodes()
     return nodeList;
 }
 
-bool Node::IsNodeAccessible(const std::string& nodeName)
+bool Node::isNodeAccessible(const std::string &nodeName)
 {
     return nodeDistances.find(nodeName) != nodeDistances.end();
 }
     
-void Node::NotifyNewNodeStatus(std::function<void (std::string, bool)> callback)
+void Node::notifyNewNodeStatus(std::function<void(std::string, bool)> callback)
 {
     notifyNewNodeStatusCallback = callback;
 }
 
-void Node::SndMessage(
-    std::string destination,
-    std::string data,
-    std::function< void(std::string, SendError)> callback)
+void Node::sndMessage(
+        std::string destination,
+        std::string data,
+        std::function<void(std::string, SendError)> callback)
 {
-    if (IsNodeAccessible(destination))
+    if (isNodeAccessible(destination))
     {
         auto namePath = nodePaths.find(destination);
         auto connection = namePath->second;
         
         std::size_t messageID = std::hash<std::string>{}(data);
         DataMessage message(name, destination, data, messageID);
-        
-        connection->Send(
-            message, 
-            std::bind(
-                &Node::OnWrite, 
-                this,
+
+        connection->send(
                 message,
-                std::placeholders::_1
-            )
+                std::bind(
+                        &Node::onWrite,
+                        this,
+                        message,
+                        std::placeholders::_1
+                )
         );
 
         ackCallbacks.insert({ messageID, callback });
@@ -174,12 +174,12 @@ void Node::SndMessage(
     }
 }
     
-void Node::AcceptMessages(std::function<void (DataMessage&)> callback)
+void Node::acceptMessages(std::function<void(DataMessage &)> callback)
 {
     messageAcceptor = callback;
 }
 
-void Node::CloseConnection(SharedConnection connectionDown)
+void Node::closeConnection(SharedConnection connectionDown)
 {
     RoutingMessage nodesDown;
     std::vector<std::string> toDelete;
@@ -187,7 +187,7 @@ void Node::CloseConnection(SharedConnection connectionDown)
     {
         if (nodePath.second == connectionDown)
         {
-            nodesDown.AddFailedNode(nodePath.first);
+            nodesDown.addFailedNode(nodePath.first);
             toDelete.push_back(nodePath.first);
         }
     }
@@ -202,7 +202,7 @@ void Node::CloseConnection(SharedConnection connectionDown)
         nodeDistances.erase(nodeName);
     }
 
-    connectionDown->Close();
+    connectionDown->close();
     connections.erase(connectionDown);
     
 
@@ -213,50 +213,50 @@ void Node::CloseConnection(SharedConnection connectionDown)
     
     for (auto connection : connections)
     {
-        connection->Send(
-            nodesDown, 
-            std::bind(
-                &Node::OnWrite, 
-                this, 
+        connection->send(
                 nodesDown,
-                std::placeholders::_1
-            )
+                std::bind(
+                        &Node::onWrite,
+                        this,
+                        nodesDown,
+                        std::placeholders::_1
+                )
         );
     }
 
-    if (connectionDown->ReconnectIfClosed())
+    if (connectionDown->getReconnect())
     {
-        Connect(connectionDown->RemoteIP(), connectionDown->RemotePort(), true);
+        connect(connectionDown->getRemoteIP(), connectionDown->getRemotePort(), true);
     }
 }
 
-void Node::SendRoutingToNewConnection(SharedConnection connection)
+void Node::sendRoutingToNewConnection(SharedConnection connection)
 {
     RoutingMessage message;
-    message.AddNodeDistance(std::make_pair(name, 0));
+    message.addNodeDistance(std::make_pair(name, 0));
     
     for (auto nodeDistance : nodeDistances)
     {
-        message.AddNodeDistance(nodeDistance);
+        message.addNodeDistance(nodeDistance);
     }
 
     if(isLogger)
     {
-        message.AddLogger(std::make_pair(name, 0));
+        message.addLogger(std::make_pair(name, 0));
     }
 
-    connection->Send(
-        message, 
-        std::bind(
-            &Node::OnWrite,
-            this,
+    connection->send(
             message,
-            std::placeholders::_1
-        )
+            std::bind(
+                    &Node::onWrite,
+                    this,
+                    message,
+                    std::placeholders::_1
+            )
     );
 }
 
-SharedConnection Node::AddConnection(tcp::socket&& socket, bool reconnect)
+SharedConnection Node::addConnection(tcp::socket &&socket, bool reconnect)
 {
     auto connection = std::make_shared<Connection>(
         *this,
@@ -264,7 +264,7 @@ SharedConnection Node::AddConnection(tcp::socket&& socket, bool reconnect)
         std::move(socket),
         reconnect,
         std::bind(
-            &Node::CloseConnection,
+                &Node::closeConnection,
             this,
             std::placeholders::_1));
     
@@ -273,70 +273,68 @@ SharedConnection Node::AddConnection(tcp::socket&& socket, bool reconnect)
     return connection;
 }
 
-void Node::OnRead(MessageVariant _message, SharedConnection _connection)
+void Node::onRead(MessageVariant _message, SharedConnection _connection)
 {
     boost::apply_visitor(MessageVisitor(*this, _connection), _message);
 }
 
-void Node::OnWrite(MessageVariant message, boost::system::error_code error) const
+void Node::onWrite(MessageVariant message, boost::system::error_code error) const
 {
 }
 
-void Node::OnReconnectTimer(
-    std::shared_ptr<boost::asio::deadline_timer> timer,
-    std::string host,
-    unsigned short port,
-    const boost::system::error_code& error)
+void Node::onReconnectTimer(
+        std::shared_ptr<boost::asio::deadline_timer> timer,
+        std::string host,
+        unsigned short port,
+        const boost::system::error_code &error)
 {
     if (!error)
     {
-        Connect(host, port, true);
+        connect(host, port, true);
     }
 }
 
     template <>
-void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
+void Node::handleMessage(RoutingMessage& _message, SharedConnection _connection)
 {
     RoutingMessage reply;
     RoutingMessage forward;
-    
-    ProcessAddNodePaths(_message, reply, forward, _connection);
-    ProcessFailedNodes(_message, reply, forward, _connection);
-    ProcessLogger(_message, reply, forward);
 
+    processAddNodePaths(_message, reply, forward, _connection);
+    processFailedNodes(_message, reply, forward, _connection);
+    processLogger(_message, reply, forward);
 
-    
-    if (reply.NodeDistances().size() > 0 ||
-        reply.FailedNodes().size() > 0 ||
-        reply.LoggerDistance().first != "")
+    if (reply.getNodeDistances().size() > 0 ||
+            reply.getFailedNodes().size() > 0 ||
+            reply.getLoggerDistance().first != "")
     {
-        _connection->Send(
-            reply,
-            std::bind(
-                &Node::OnWrite,
-                this,
+        _connection->send(
                 reply,
-                std::placeholders::_1
-            )
+                std::bind(
+                        &Node::onWrite,
+                        this,
+                        reply,
+                        std::placeholders::_1
+                )
         );
     }
     
-    if (forward.NodeDistances().size() > 0 ||
-        forward.FailedNodes().size() > 0 ||
-        forward.LoggerDistance().first != "")
+    if (forward.getNodeDistances().size() > 0 ||
+            forward.getFailedNodes().size() > 0 ||
+            forward.getLoggerDistance().first != "")
     {
         for (auto conn : connections)
         {
             if (conn != _connection)
             {
-                conn->Send(
-                    forward,
-                    std::bind(
-                        &Node::OnWrite,
-                        this,
+                conn->send(
                         forward,
-                        std::placeholders::_1
-                    )
+                        std::bind(
+                                &Node::onWrite,
+                                this,
+                                forward,
+                                std::placeholders::_1
+                        )
                 );
             }
         }
@@ -344,7 +342,7 @@ void Node::HandleMessage(RoutingMessage& _message, SharedConnection _connection)
 }
 
 template<>
-void Node::HandleMessage(DataMessage& _message, SharedConnection _connection)
+void Node::handleMessage(DataMessage& _message, SharedConnection _connection)
 {
     _message.distance++;
 
@@ -353,15 +351,15 @@ void Node::HandleMessage(DataMessage& _message, SharedConnection _connection)
         if (messageAcceptor)
         {
             messageAcceptor(_message);
-            DataMessageAck message(name, _message.sourceNodeName, eSuccess, _message.MessageID());
-            _connection->Send(
-                message,
-                std::bind(
-                    &Node::OnWrite,
-                    this,
+            DataMessageAck message(name, _message.sourceNodeName, eSuccess, _message.getMessageID());
+            _connection->send(
                     message,
-                    std::placeholders::_1
-                )
+                    std::bind(
+                            &Node::onWrite,
+                            this,
+                            message,
+                            std::placeholders::_1
+                    )
             );
         }
         else
@@ -370,53 +368,53 @@ void Node::HandleMessage(DataMessage& _message, SharedConnection _connection)
                 _message.sourceNodeName,
                 name,
                 eNodeNotAccepting,
-                _message.MessageID()
+                _message.getMessageID()
             );
-            _connection->Send(
-                message,
-                std::bind(
-                    &Node::OnWrite,
-                    this,
+            _connection->send(
                     message,
-                    std::placeholders::_1
-                )
+                    std::bind(
+                            &Node::onWrite,
+                            this,
+                            message,
+                            std::placeholders::_1
+                    )
             );
         }
     }
     else
     {
-        if (IsNodeAccessible(_message.destinationNodeName))
+        if (isNodeAccessible(_message.destinationNodeName))
         {
             auto namePath = nodePaths.find(_message.destinationNodeName);
             auto connection = namePath->second;
-            connection->Send(
-                _message,
-                std::bind(
-                    &Node::OnWrite,
-                    this,
+            connection->send(
                     _message,
-                    std::placeholders::_1
-                )
+                    std::bind(
+                            &Node::onWrite,
+                            this,
+                            _message,
+                            std::placeholders::_1
+                    )
             );
         }
         else
         {
-            DataMessageAck message(_message.sourceNodeName, name, eNoPath, _message.MessageID());
-            _connection->Send(
-                message,
-                std::bind(
-                    &Node::OnWrite,
-                    this,
+            DataMessageAck message(_message.sourceNodeName, name, eNoPath, _message.getMessageID());
+            _connection->send(
                     message,
-                    std::placeholders::_1
-                )
+                    std::bind(
+                            &Node::onWrite,
+                            this,
+                            message,
+                            std::placeholders::_1
+                    )
             );
         }
     }
 }
     
 template<>
-void Node::HandleMessage(DataMessageAck& _message, SharedConnection _connection)
+void Node::handleMessage(DataMessageAck& _message, SharedConnection _connection)
 {
     if (_message.destinationNodeName == name)
     {
@@ -429,57 +427,57 @@ void Node::HandleMessage(DataMessageAck& _message, SharedConnection _connection)
     }
     else
     {
-        if (IsNodeAccessible(_message.destinationNodeName))
+        if (isNodeAccessible(_message.destinationNodeName))
         {
             auto namePath = nodePaths.find(_message.destinationNodeName);
             auto connection = namePath->second;
-            connection->Send(
-                _message,
-                std::bind(
-                    &Node::OnWrite,
-                    this,
+            connection->send(
                     _message,
-                    std::placeholders::_1
-                )
+                    std::bind(
+                            &Node::onWrite,
+                            this,
+                            _message,
+                            std::placeholders::_1
+                    )
             );
         }
     }
 }
 
 template<>
-void Node::HandleMessage(LogMessage& _message, SharedConnection _connection)
+void Node::handleMessage(LogMessage& _message, SharedConnection _connection)
 {
-    if (_message.DestinationNodeName() == name)
+    if (_message.getDestinationNodeName() == name)
     {
         std::chrono::time_point<std::chrono::system_clock> epoch;
-        std::chrono::milliseconds millisecondsSinceEpoch{ _message.MillisecondsSinceEpoch() };
+        std::chrono::milliseconds millisecondsSinceEpoch{_message.getMillisecondsSinceEpoch() };
         auto logTime = std::chrono::system_clock::to_time_t(epoch + millisecondsSinceEpoch);
 
         std::cout
             << "LOG -- "
             << std::put_time(std::localtime(&logTime), "%F %T")
             << " -- "
-            << _message.SourceNodeName()
+            << _message.getSourceNodeName()
             << " -- "
-            << _message.Log()
+            << _message.getLogMessage()
             << "\n";
     }
     else
     {
-        auto forwardConnection = GetConnectionToNode(_message.DestinationNodeName());
+        auto forwardConnection = getConnectionToNode(_message.getDestinationNodeName());
         if (forwardConnection)
         {
             ioservice.post(
                 [this, forwardConnection, _message]
                 {
-                    forwardConnection->Send(
-                        _message,
-                        std::bind(
-                            &Node::OnWrite,
-                            this,
+                    forwardConnection->send(
                             _message,
-                            std::placeholders::_1
-                        )
+                            std::bind(
+                                    &Node::onWrite,
+                                    this,
+                                    _message,
+                                    std::placeholders::_1
+                            )
                     );
                 }
             );
@@ -488,51 +486,39 @@ void Node::HandleMessage(LogMessage& _message, SharedConnection _connection)
 }
 
 template<>
-void Node::HandleMessage(Handshake& _message, SharedConnection _connection)
+void Node::handleMessage(Handshake& _message, SharedConnection _connection)
 {
     // this is the accepted connection.
-    std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
+    std::cout << name << ": connection with node " << _message.getNodeName() << " established.\n";
     HandshakeReply message(name);
-    _connection->Send(message, [this, _connection](boost::system::error_code ec)
-    {
-        if (!ec)
-        {
-            SendRoutingToNewConnection(_connection);
+    _connection->send(message, [this, _connection](boost::system::error_code ec) {
+        if (!ec) {
+            sendRoutingToNewConnection(_connection);
         }
     });
-
-    if (notifyNewNodeStatusCallback)
-    {
-        notifyNewNodeStatusCallback(_message.NodeName(), true);
-    }
 }
 
 template<>
-void Node::HandleMessage(HandshakeReply& _message, SharedConnection _connection)
+void Node::handleMessage(HandshakeReply& _message, SharedConnection _connection)
 {
     // this is the connected connection.
-    std::cout << name << ": connection with node " << _message.NodeName() << " established.\n";
-    SendRoutingToNewConnection(_connection);
-
-    if (notifyNewNodeStatusCallback)
-    {
-        notifyNewNodeStatusCallback(_message.NodeName(), true);
-    }
+    std::cout << name << ": connection with node " << _message.getNodeName() << " established.\n";
+    sendRoutingToNewConnection(_connection);
 }
 
-void Node::ProcessAddNodePaths(
-    RoutingMessage& message,
-    RoutingMessage& reply,
-    RoutingMessage& forward,
-    SharedConnection connection)
+void Node::processAddNodePaths(
+        RoutingMessage &message,
+        RoutingMessage &reply,
+        RoutingMessage &forward,
+        SharedConnection connection)
 {
-    for (auto nodeDistance : message.NodeDistances())
+    for (auto nodeDistance : message.getNodeDistances())
     {
         auto it = nodeDistances.find(nodeDistance.first);
         if (it == nodeDistances.end())
         {
             auto nodeDist = std::make_pair(nodeDistance.first, nodeDistance.second + 1);
-            forward.AddNodeDistance(nodeDist);
+            forward.addNodeDistance(nodeDist);
             
             nodeDistances.insert(nodeDist);
             nodePaths.insert(std::make_pair(nodeDistance.first, connection));
@@ -540,13 +526,13 @@ void Node::ProcessAddNodePaths(
             // notify node owner of new node accessible.
             if(notifyNewNodeStatusCallback)
             {
-                notifyNewNodeStatusCallback(nodeDistance.first, true);
+                ioservice.post(std::bind(notifyNewNodeStatusCallback, nodeDistance.first, true));
             }
         }
         else if (it->second > nodeDistance.second + 1)
         {
             auto nodeDist = std::make_pair(nodeDistance.first, nodeDistance.second + 1);
-            forward.AddNodeDistance(nodeDist);
+            forward.addNodeDistance(nodeDist);
             
             it->second = nodeDistance.second + 1;
             auto itNodePath = nodePaths.find(nodeDistance.first);
@@ -554,18 +540,18 @@ void Node::ProcessAddNodePaths(
         }
         else if (it->second + 1 < nodeDistance.second)
         {
-            reply.AddNodeDistance(*it);
+            reply.addNodeDistance(*it);
         }
     }
 }
 
-void Node::ProcessFailedNodes(
-    RoutingMessage& message,
-    RoutingMessage& reply,
-    RoutingMessage& forward,
-    SharedConnection connection)
+void Node::processFailedNodes(
+        RoutingMessage &message,
+        RoutingMessage &reply,
+        RoutingMessage &forward,
+        SharedConnection connection)
 {
-    for (auto node : message.FailedNodes())
+    for (auto node : message.getFailedNodes())
     {
         auto it = nodePaths.find(node);
         if (it != nodePaths.end())
@@ -574,7 +560,7 @@ void Node::ProcessFailedNodes(
             {
                 nodeDistances.erase(node);
                 nodePaths.erase(node);
-                forward.AddFailedNode(node);
+                forward.addFailedNode(node);
                 if(loggerDistance.first == node)
                 {
                     loggerDistance = std::make_pair("", 0);
@@ -589,18 +575,18 @@ void Node::ProcessFailedNodes(
             else
             {
                 auto iterator = nodeDistances.find(node);
-                reply.AddNodeDistance(*iterator);
+                reply.addNodeDistance(*iterator);
             }
         }
     }
 }
 
-void Node::ProcessLogger(
-    RoutingMessage& message,
-    RoutingMessage& reply,
-    RoutingMessage& forward)
+void Node::processLogger(
+        RoutingMessage &message,
+        RoutingMessage &reply,
+        RoutingMessage &forward)
 {
-    auto messageLoggerDistance = message.LoggerDistance();
+    auto messageLoggerDistance = message.getLoggerDistance();
 
     if (messageLoggerDistance.first != "")
     {
@@ -610,32 +596,30 @@ void Node::ProcessLogger(
         {
             loggerDistance = messageLoggerDistance;
             loggerDistance.second++;
-            forward.AddLogger(loggerDistance);
+            forward.addLogger(loggerDistance);
         }
         else if (loggerDistance.second < messageLoggerDistance.second + 1)
         {
-            reply.AddLogger(loggerDistance);
+            reply.addLogger(loggerDistance);
         }
     }
 }
 
-    void Node::StartConnection(SharedConnection connection, Connection::Type type)
+    void Node::startConnection(SharedConnection connection, Connection::Type type)
     {
         if (type == Connection::eConnected)
         {
             Handshake message(name);
-            connection->Send(message, [this, connection](boost::system::error_code ec)
-            {
-                if (!ec)
-                {
+            connection->send(message, [this, connection](boost::system::error_code ec) {
+                if (!ec) {
                     // Wait for reply.
-                    connection->Read(
-                        std::bind(
-                            &Node::OnRead,
-                            this,
-                            std::placeholders::_1,
-                            std::placeholders::_2
-                        )
+                    connection->read(
+                            std::bind(
+                                    &Node::onRead,
+                                    this,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2
+                            )
                     );
                 }
             });
@@ -643,18 +627,18 @@ void Node::ProcessLogger(
         else if (type == Connection::eAccepted)
         {
             // waiting for handshake message.
-            connection->Read(
-                std::bind(
-                    &Node::OnRead,
-                    this,
-                    std::placeholders::_1,
-                    std::placeholders::_2
-                )
+            connection->read(
+                    std::bind(
+                            &Node::onRead,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2
+                    )
             );
         }
     }
 
-    void Node::Log(const std::string& logMessage)
+    void Node::log(const std::string &logMessage)
     {
         if (loggerDistance.first != "")
         {
@@ -664,20 +648,20 @@ void Node::ProcessLogger(
                 ).count();
             LogMessage message(millisecondsSinceEpoch, name, loggerDistance.first, logMessage);
 
-            auto connection = GetConnectionToNode(loggerDistance.first);
+            auto connection = getConnectionToNode(loggerDistance.first);
             if (connection)
             {
                 ioservice.post(
                     [this, connection, message]
                     {
-                        connection->Send(
-                            message,
-                            std::bind(
-                                &Node::OnWrite,
-                                this,
+                        connection->send(
                                 message,
-                                std::placeholders::_1
-                            )
+                                std::bind(
+                                        &Node::onWrite,
+                                        this,
+                                        message,
+                                        std::placeholders::_1
+                                )
                         );
                     }
                 );
@@ -685,9 +669,9 @@ void Node::ProcessLogger(
         }
     }
 
-    SharedConnection Node::GetConnectionToNode(const std::string& nodeName)
+    SharedConnection Node::getConnectionToNode(const std::string &nodeName)
     {
-        if (IsNodeAccessible(nodeName))
+        if (isNodeAccessible(nodeName))
         {
             auto namePath = nodePaths.find(nodeName);
             auto connection = namePath->second;

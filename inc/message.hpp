@@ -23,11 +23,11 @@ namespace NetworkLayer
             body.assign(aBody.begin(), aBody.end());
         }
 
-        char* GetHeader() { return header; }
-        auto& GetBody() { return body; }
-        std::size_t GetBodySize() const { return bodySize; }
+        char* getHeader() { return header; }
+        std::vector<char>& getBody() { return body; }
+        std::size_t getBodySize() const { return bodySize; }
 
-        void CreateOutputBuffer()
+        void createOutputBuffer()
         {
             auto networkSize = htonl(body.size());
             memcpy(header, &networkSize, eHeaderLength);
@@ -37,9 +37,9 @@ namespace NetworkLayer
             outputBuffer.insert(outputBuffer.end(), body.begin(), body.end());
         }
 
-        auto& GetOutputBuffer() { return outputBuffer; }
+        std::vector<char>& getOutputBuffer() { return outputBuffer; }
 
-        void DecodeHeader()
+        void decodeHeader()
         {
             uint32_t networkSize;
             memcpy(&networkSize, header, eHeaderLength);

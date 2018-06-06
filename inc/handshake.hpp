@@ -17,7 +17,7 @@ namespace NetworkLayer
             nodeName(_nodeName)
         {}
 
-        const std::string& NodeName() const { return nodeName; }
+        const std::string& getNodeName() const { return nodeName; }
 
     private:
         friend class boost::serialization::access;

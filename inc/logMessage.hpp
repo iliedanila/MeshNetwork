@@ -25,10 +25,10 @@ namespace NetworkLayer
             logMessage(_logMessage)
         {}
 
-        int64_t MillisecondsSinceEpoch() const { return millisecondsSinceEpoch; }
-        const std::string& SourceNodeName() const { return sourceNodeName; }
-        const std::string& DestinationNodeName() const { return destinationNodeName; }
-        const std::string& Log() const { return logMessage; }
+        int64_t getMillisecondsSinceEpoch() const { return millisecondsSinceEpoch; }
+        const std::string& getSourceNodeName() const { return sourceNodeName; }
+        const std::string& getDestinationNodeName() const { return destinationNodeName; }
+        const std::string& getLogMessage() const { return logMessage; }
 
     private:
         friend class boost::serialization::access;

@@ -14,22 +14,22 @@ class RoutingMessage
 public:
     RoutingMessage() {}
     ~RoutingMessage() {}
+
+    std::map<std::string, uint32_t> getNodeDistances() { return nodeDistances; }
+    std::vector<std::string> getFailedNodes() { return failedNodes; }
+    std::pair<std::string, uint32_t> getLoggerDistance() { return loggerDistance; }
     
-    auto NodeDistances() { return nodeDistances; }
-    auto FailedNodes() { return failedNodes; }
-    auto LoggerDistance() { return loggerDistance; }
-    
-    void AddNodeDistance(std::pair<std::string, uint32_t> _nodeDistance)
+    void addNodeDistance(std::pair<std::string, uint32_t> _nodeDistance)
     {
         nodeDistances.insert(_nodeDistance);
     }
     
-    void AddFailedNode(std::string node)
+    void addFailedNode(std::string node)
     {
         failedNodes.push_back(node);
     }
 
-    void AddLogger(std::pair<std::string, uint32_t> _loggerDistance)
+    void addLogger(std::pair<std::string, uint32_t> _loggerDistance)
     {
         loggerDistance = _loggerDistance;
     }

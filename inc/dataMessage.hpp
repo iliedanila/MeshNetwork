@@ -18,7 +18,7 @@ public:
 
     ~DataMessage() {}
     
-    DataMessage(std::string source, std::string destination, std::string buff, std::size_t _messageID)
+    DataMessage(std::string source, std::string destination, std::string buff, uint64_t _messageID)
     :
         sourceNodeName(std::move(source)),
         destinationNodeName(std::move(destination)),
@@ -27,10 +27,10 @@ public:
         messageID(_messageID)
     {}
 
-    std::string Source() const { return sourceNodeName; }
-    std::string Buffer() const { return buffer; }
-    uint32_t Distance() const { return distance; }
-    std::size_t MessageID() const { return messageID; }
+    std::string getSourceNodeName() const { return sourceNodeName; }
+    std::string getBuffer() const { return buffer; }
+    uint32_t getDistance() const { return distance; }
+    uint64_t getMessageID() const { return messageID; }
 
 private:
     friend class boost::serialization::access;
@@ -51,7 +51,7 @@ private:
     std::string destinationNodeName;
     std::string buffer;
     uint32_t distance;
-    std::size_t messageID;
+    uint64_t messageID;
 };
 
 }

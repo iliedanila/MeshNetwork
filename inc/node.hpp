@@ -23,6 +23,7 @@ namespace NetworkLayer
 {
     
 typedef std::function<void(std::string, SendError)> AckMessageCallback;
+typedef std::function<void(std::string, bool)> NewNodeStatusCallbackT;
 
 class Node
 {
@@ -30,71 +31,71 @@ public:
     Node(std::string _name,	io_service& _io_service, bool _isLogger = false);
     ~Node();
     
-    void Accept(unsigned short _port);
-    void Connect(std::string _host, unsigned short _port, bool _reconnect = false);
+    void accept(unsigned short _port);
+    void connect(std::string _host, unsigned short _port, bool _reconnect = false);
     
-    std::string& Name() { return name; }
-    void Close();
+    std::string& getName() { return name; }
+    void close();
     
-    std::vector<std::string> GetAccessibleNodes();
+    std::vector<std::string> getAccessibleNodes();
     
-    bool IsNodeAccessible(const std::string& nodeName);
+    bool isNodeAccessible(const std::string &nodeName);
     
-    void NotifyNewNodeStatus(std::function<void(std::string, bool)> callback);
+    void notifyNewNodeStatus(NewNodeStatusCallbackT callback);
     
-    void SndMessage(
-        std::string destination,
-        std::string data,
-        std::function< void(std::string, SendError)> callback);
+    void sndMessage(
+            std::string destination,
+            std::string data,
+            std::function<void(std::string, SendError)> callback);
     
-    void AcceptMessages(std::function< void(DataMessage&) > callback);
+    void acceptMessages(std::function<void(DataMessage &)> callback);
 
-    void Log(const std::string& logMessage);
+    void log(const std::string &logMessage);
 
-    io_service& IOService() const { return ioservice; }
+    io_service& getIOService() const { return ioservice; }
     
 private:
     friend struct MessageVisitor;
     
-    SharedConnection AddConnection(tcp::socket&& socket, bool reconnect);
+    SharedConnection addConnection(tcp::socket &&socket, bool reconnect);
 
-    void StartConnection(SharedConnection connection, Connection::Type type);
+    void startConnection(SharedConnection connection, Connection::Type type);
     
-    void CloseConnection(SharedConnection);
+    void closeConnection(SharedConnection);
     
-    void SendRoutingToNewConnection(SharedConnection);
+    void sendRoutingToNewConnection(SharedConnection);
     
-    void OnRead(MessageVariant, SharedConnection);
+    void onRead(MessageVariant, SharedConnection);
     
-    void OnWrite(MessageVariant message, boost::system::error_code error) const;
+    void onWrite(MessageVariant message, boost::system::error_code error) const;
 
-    void OnReconnectTimer(
-        std::shared_ptr<boost::asio::deadline_timer> timer,
-        std::string host,
-        unsigned short port,
-        const boost::system::error_code& error);
+    void onReconnectTimer(
+            std::shared_ptr<boost::asio::deadline_timer> timer,
+            std::string host,
+            unsigned short port,
+            const boost::system::error_code &error);
     
     template <typename MessageT>
-    void HandleMessage(MessageT&, SharedConnection);
+    void handleMessage(MessageT &, SharedConnection);
     
-    void ProcessAddNodePaths(
-        RoutingMessage& message,
-        RoutingMessage& reply,
-        RoutingMessage& forward,
-        SharedConnection connection);
+    void processAddNodePaths(
+            RoutingMessage &message,
+            RoutingMessage &reply,
+            RoutingMessage &forward,
+            SharedConnection connection);
 
-    void ProcessFailedNodes(
-        RoutingMessage& message,
-        RoutingMessage& reply,
-        RoutingMessage& forward,
-        SharedConnection connection);
+    void processFailedNodes(
+            RoutingMessage &message,
+            RoutingMessage &reply,
+            RoutingMessage &forward,
+            SharedConnection connection);
 
-    void ProcessLogger(
-        RoutingMessage& message,
-        RoutingMessage& reply,
-        RoutingMessage& forward);
+    void processLogger(
+            RoutingMessage &message,
+            RoutingMessage &reply,
+            RoutingMessage &forward);
 
-    SharedConnection GetConnectionToNode(const std::string& nodeName);
+    SharedConnection getConnectionToNode(const std::string &nodeName);
 
     std::string name;
     std::set<SharedConnection> connections;
@@ -107,11 +108,11 @@ private:
     
     bool closing;
     std::function<void(DataMessage&)> messageAcceptor;
-    std::function<void(std::string, bool)> notifyNewNodeStatusCallback;
+    NewNodeStatusCallbackT notifyNewNodeStatusCallback;
     
     tcp::socket connect_socket;
     tcp::socket accept_socket;
-    io_service& ioservice;
+    io_context& ioservice;
     bool isLogger;
 };
     
