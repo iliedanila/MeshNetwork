@@ -37,7 +37,7 @@ void Node::accept(unsigned short _port)
     
     if (!acceptor)
     {
-        acceptor = std::make_unique<tcp::acceptor>(ioservice, endpoint);
+        acceptor = std::unique_ptr<tcp::acceptor>(new tcp::acceptor(ioservice, endpoint));
     }
     
     acceptor->async_accept(
@@ -455,7 +455,7 @@ void Node::handleMessage(LogMessage& _message, SharedConnection _connection)
 
         std::cout
             << "LOG -- "
-            << std::put_time(std::localtime(&logTime), "%F %T")
+            // << std::put_time(std::localtime(&logTime), "%F %T")
             << " -- "
             << _message.getSourceNodeName()
             << " -- "
