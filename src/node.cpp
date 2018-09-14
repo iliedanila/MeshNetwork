@@ -90,7 +90,7 @@ void Node::connect(
                     << " error connecting: "
                     << error.message() 
                     << "\n";
-                if (reconnect)
+                if (reconnect && !closing)
                 {
                     std::cout << "Reconnecting...\n";
 
