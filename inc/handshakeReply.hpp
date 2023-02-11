@@ -1,34 +1,31 @@
 #ifndef _HANDSHAKE_REPLY_HPP_
 #define _HANDSHAKE_REPLY_HPP_
 
-#include <string>
 #include <boost/serialization/access.hpp>
+#include <string>
 
-namespace NetworkLayer
-{
-    class HandshakeReply
-    {
-    public:
-        HandshakeReply() {}
-        ~HandshakeReply() {}
+namespace NetworkLayer {
+class HandshakeReply {
+   public:
+    HandshakeReply() {}
 
-        explicit HandshakeReply(const std::string& _nodeName)
-        :
-            nodeName(_nodeName)
-        {}
+    ~HandshakeReply() {}
 
-        const std::string& getNodeName() const { return nodeName; }
+    explicit HandshakeReply(const std::string& _nodeName)
+        : nodeName(_nodeName) {}
 
-    private:
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-            ar & nodeName;
-        }
+    const std::string& getNodeName() const { return nodeName; }
 
-        std::string nodeName;
-    };
-}
+   private:
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar& nodeName;
+    }
+
+    std::string nodeName;
+};
+}  // namespace NetworkLayer
 
 #endif

@@ -5,28 +5,22 @@
 
 #include "node.hpp"
 
-namespace NetworkLayer
-{
+namespace NetworkLayer {
 
-struct MessageVisitor : public boost::static_visitor<>
-{
+struct MessageVisitor : public boost::static_visitor<> {
     MessageVisitor(Node& _node, SharedConnection _connection)
-    :
-        connection(_connection),
-        node(_node)
-    {}
-    
+        : connection(_connection), node(_node) {}
+
     template <typename MessageT>
-    void operator()(MessageT& message) const
-    {
+    void operator()(MessageT& message) const {
         node.handleMessage(message, connection);
     }
-    
-private:
+
+   private:
     SharedConnection connection;
     Node& node;
 };
-    
-}
+
+}  // namespace NetworkLayer
 
 #endif /* messageVisitor_h */
