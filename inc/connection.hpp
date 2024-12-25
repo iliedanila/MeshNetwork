@@ -24,7 +24,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
    public:
     enum Type { eAccepted, eConnected };
 
-    Connection(Node& node, io_service& ioservice, tcp::socket&& socket,
+    Connection(Node& node, io_context& ioservice, tcp::socket&& socket,
                bool reconnect,
                std::function<void(std::shared_ptr<Connection>)> closeHandler);
 
@@ -48,7 +48,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
     void readHeader(ReadCallback readCallback);
     void readBody(ReadCallback readCallback);
 
-    io_service& ioservice;
+    io_context& ioservice;
     tcp::socket socket;
     bool reconnect;
     std::function<void(std::shared_ptr<Connection>)> closeHandler;

@@ -14,7 +14,7 @@ using namespace boost::asio::ip;
 
 namespace NetworkLayer {
 
-Node::Node(std::string _name, boost::asio::io_service& _ioservice,
+Node::Node(std::string _name, boost::asio::io_context& _ioservice,
            bool _isLogger)
     : name(std::move(_name)),
       closing(false),
@@ -304,7 +304,7 @@ void Node::handleMessage(LogMessage& _message, SharedConnection _connection) {
         auto forwardConnection =
             getConnectionToNode(_message.getDestinationNodeName());
         if (forwardConnection) {
-            ioservice.post([this, forwardConnection, _message] {
+            boost::asio::post(ioservice, [this, forwardConnection, _message] {
                 forwardConnection->send(
                     _message, std::bind(&Node::onWrite, this, _message,
                                         std::placeholders::_1));
@@ -351,8 +351,9 @@ void Node::processAddNodePaths(RoutingMessage& message, RoutingMessage& reply,
 
             // notify node owner of new node accessible.
             if (notifyNewNodeStatusCallback) {
-                ioservice.post(std::bind(notifyNewNodeStatusCallback,
-                                         nodeDistance.first, true));
+                boost::asio::post(ioservice,
+                                  std::bind(notifyNewNodeStatusCallback,
+                                            nodeDistance.first, true));
             }
         } else if (it->second > nodeDistance.second + 1) {
             auto nodeDist =
@@ -440,7 +441,7 @@ void Node::log(const std::string& logMessage) {
 
         auto connection = getConnectionToNode(loggerDistance.first);
         if (connection) {
-            ioservice.post([this, connection, message] {
+            boost::asio::post(ioservice, [this, connection, message] {
                 connection->send(message,
                                  std::bind(&Node::onWrite, this, message,
                                            std::placeholders::_1));

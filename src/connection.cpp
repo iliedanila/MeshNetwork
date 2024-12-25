@@ -12,7 +12,7 @@
 namespace NetworkLayer {
 
 Connection::Connection(
-    Node& _node, boost::asio::io_service& _ioservice, tcp::socket&& _socket,
+    Node& _node, boost::asio::io_context& _ioservice, tcp::socket&& _socket,
     bool _reconnect,
     std::function<void(std::shared_ptr<Connection>)> _closeHandler)
     : ioservice(_ioservice),

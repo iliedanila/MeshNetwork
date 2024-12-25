@@ -25,7 +25,7 @@ typedef std::function<void(std::string, bool)> NewNodeStatusCallbackT;
 
 class Node {
    public:
-    Node(std::string _name, io_service& _io_service, bool _isLogger = false);
+    Node(std::string _name, io_context& _io_context, bool _isLogger = false);
     ~Node();
 
     void accept(unsigned short _port);
@@ -49,7 +49,7 @@ class Node {
 
     void log(const std::string& logMessage);
 
-    io_service& getIOService() const { return ioservice; }
+    io_context& getIOService() const { return ioservice; }
 
    private:
     friend struct MessageVisitor;
