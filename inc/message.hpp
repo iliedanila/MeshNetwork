@@ -9,7 +9,7 @@
 namespace NetworkLayer {
 class Message {
    public:
-    enum { eHeaderLength = 4 };
+    enum { eHeaderLength = 4, eMaxBodyLength = 16 * 1024 * 1024 };
 
     Message() : bodySize(0) {}
 
@@ -35,12 +35,16 @@ class Message {
 
     std::vector<char>& getOutputBuffer() { return outputBuffer; }
 
-    void decodeHeader() {
+    // Returns false when the header announces more than eMaxBodyLength.
+    bool decodeHeader() {
         uint32_t networkSize;
         memcpy(&networkSize, header, eHeaderLength);
         bodySize = ntohl(networkSize);
-        body.reserve(bodySize);
+        if (bodySize > eMaxBodyLength) {
+            return false;
+        }
         body.assign(bodySize, '\0');
+        return true;
     }
 
    private:

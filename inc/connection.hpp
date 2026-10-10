@@ -44,6 +44,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
 
    private:
     void write();
+    void failQueuedWrites(boost::system::error_code error);
+    void closeAfterError();
 
     void readHeader(ReadCallback readCallback);
     void readBody(ReadCallback readCallback);
@@ -59,6 +61,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
     Node& node;
     Message readMessage;
     MessageQueue writeMessages;
+    bool closedAfterError = false;
 };
 
 }  // namespace NetworkLayer
