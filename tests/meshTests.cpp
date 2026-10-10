@@ -305,6 +305,57 @@ void oversizedSendReportsError() {
     MESH_CHECK(a.isNodeAccessible("B"));
 }
 
+// A neighbour's advert that was in flight while the neighbour rerouted must
+// not survive the destination leaving.
+void staleAdvertIsWithdrawnAfterReroute() {
+    io_context io;
+    Node a("A", io), b("B", io), c("C", io), d("D", io), e("E", io);
+    a.accept(47140);
+    b.accept(47141);
+    c.accept(47142);
+    d.accept(47143);
+    TcpRelay eToA(io, 47144, 47140);
+    e.connect("localhost", 47144);
+    MESH_CHECK(runUntil(io, [&] {
+        return a.isNodeAccessible("E") && e.isNodeAccessible("A");
+    }));
+
+    // E learns B the long way round; its advert to A waits in the relay.
+    eToA.holdClientToTarget(true);
+    connectAndWait(io, e, 47143, d);
+    connectAndWait(io, d, 47142, c);
+    connectAndWait(io, c, 47141, b);
+    MESH_CHECK(runUntil(io, [&] { return e.isNodeAccessible("B"); }));
+    MESH_CHECK(!a.isNodeAccessible("B"));
+
+    // A links to B directly, so E reroutes to B through A.
+    connectAndWait(io, a, 47141, b);
+    MESH_CHECK(runUntilQuiet(io));
+
+    b.close();
+    MESH_CHECK(runUntilQuiet(io));
+    eToA.holdClientToTarget(false);
+    MESH_CHECK(runUntilQuiet(io));
+    for (Node* node : {&a, &c, &d, &e}) {
+        MESH_CHECK(!node->isNodeAccessible("B"));
+    }
+}
+
+void duplicateLinkSurvivesLosingTheOther() {
+    io_context io;
+    Node a("A", io), b("B", io);
+    a.accept(47150);
+    TcpRelay relay(io, 47151, 47150);
+    connectAndWait(io, b, 47151, a);
+    b.connect("localhost", 47150);
+    MESH_CHECK(runUntilQuiet(io));
+
+    relay.cut();
+    MESH_CHECK(runUntilQuiet(io));
+    MESH_CHECK(a.isNodeAccessible("B"));
+    MESH_CHECK(b.isNodeAccessible("A"));
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -328,6 +379,10 @@ int main(int argc, char** argv) {
             {"identicalPayloadsAreEachAcknowledged",
              identicalPayloadsAreEachAcknowledged},
             {"oversizedSendReportsError", oversizedSendReportsError},
+            {"staleAdvertIsWithdrawnAfterReroute",
+             staleAdvertIsWithdrawnAfterReroute},
+            {"duplicateLinkSurvivesLosingTheOther",
+             duplicateLinkSurvivesLosingTheOther},
         },
         argc, argv);
 }

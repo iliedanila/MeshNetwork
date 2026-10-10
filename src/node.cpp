@@ -223,6 +223,11 @@ SharedConnection Node::addConnection(
 }
 
 void Node::onRead(MessageVariant _message, SharedConnection _connection) {
+    // A frame read just before its connection closed must not install routes
+    // through a connection that is gone.
+    if (connections.count(_connection) == 0) {
+        return;
+    }
     boost::apply_visitor(MessageVisitor(*this, _connection), _message);
 }
 
@@ -251,12 +256,12 @@ void Node::handleMessage(RoutingMessage& _message,
                                            std::placeholders::_1));
     }
 
+    // The sender gets the changes too: it may still hold an advert of ours
+    // that this change makes stale.
     if (!forward.empty()) {
         for (auto conn : connections) {
-            if (conn != _connection) {
-                conn->send(forward, std::bind(&Node::onWrite, this, forward,
-                                              std::placeholders::_1));
-            }
+            conn->send(forward, std::bind(&Node::onWrite, this, forward,
+                                          std::placeholders::_1));
         }
     }
 }
@@ -378,7 +383,8 @@ void Node::processAdverts(const RoutingMessage& message, RoutingMessage& reply,
             // anyone else's route only wins by being shorter.
             Route updated{advert.path, connection, advert.isLogger};
             if (updated.path != it->second.path ||
-                updated.via != it->second.via) {
+                updated.via != it->second.via ||
+                updated.isLogger != it->second.isLogger) {
                 it->second = updated;
                 forward.addAdvert(advertise(it->second));
             }
@@ -394,6 +400,11 @@ void Node::processFailedNodes(const RoutingMessage& message,
                               RoutingMessage& reply, RoutingMessage& forward,
                               SharedConnection connection) {
     for (const auto& node : message.getFailedNodes()) {
+        if (node == name) {
+            // The neighbour lost its route to us but still has this link.
+            reply.addAdvert(RouteAdvert{{name}, isLogger});
+            continue;
+        }
         auto it = routes.find(node);
         if (it == routes.end()) {
             continue;
@@ -411,8 +422,10 @@ void Node::withdrawRoute(const std::string& destination,
     routes.erase(destination);
     forward.addFailedNode(destination);
     failPendingSends(destination);
+    // Posted like the "reachable" notice, so the two arrive in order.
     if (notifyNewNodeStatusCallback) {
-        notifyNewNodeStatusCallback(destination, false);
+        boost::asio::post(ioservice, std::bind(notifyNewNodeStatusCallback,
+                                               destination, false));
     }
 }
 

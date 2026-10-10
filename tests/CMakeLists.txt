@@ -18,6 +18,8 @@ set(MESH_TESTS
     sendFailsWhenDestinationDisappears
     identicalPayloadsAreEachAcknowledged
     oversizedSendReportsError
+    staleAdvertIsWithdrawnAfterReroute
+    duplicateLinkSurvivesLosingTheOther
 )
 foreach(test IN LISTS MESH_TESTS)
     add_test(NAME mesh.${test} COMMAND meshTests ${test})

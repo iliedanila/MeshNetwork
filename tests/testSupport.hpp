@@ -1,11 +1,13 @@
 #ifndef testSupport_hpp
 #define testSupport_hpp
 
+#include <array>
 #include <boost/asio.hpp>
 #include <chrono>
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -78,6 +80,99 @@ class CoutCapture {
    private:
     std::stringstream captured;
     std::streambuf* previous;
+};
+
+// Relays one TCP connection from `listenPort` to `targetPort`. Holding a
+// direction queues its bytes until released, which stages message orders;
+// cutting closes both ends, like a dropped link.
+class TcpRelay {
+   public:
+    TcpRelay(boost::asio::io_context& io, unsigned short listenPort,
+             unsigned short targetPort)
+        : acceptor(io, {boost::asio::ip::address_v4::loopback(), listenPort}),
+          client(io),
+          target(io) {
+        acceptor.async_accept(
+            client, [this, targetPort](boost::system::error_code error) {
+                if (error) {
+                    return;
+                }
+                target.async_connect(
+                    {boost::asio::ip::address_v4::loopback(), targetPort},
+                    [this](boost::system::error_code error) {
+                        if (error) {
+                            cut();
+                            return;
+                        }
+                        pump(clientToTarget);
+                        pump(targetToClient);
+                    });
+            });
+    }
+
+    void holdClientToTarget(bool hold) {
+        clientToTarget.holding = hold;
+        flush(clientToTarget);
+    }
+
+    void cut() {
+        boost::system::error_code ignored;
+        client.close(ignored);
+        target.close(ignored);
+    }
+
+   private:
+    struct Direction {
+        boost::asio::ip::tcp::socket& from;
+        boost::asio::ip::tcp::socket& to;
+        std::array<char, 4096> readBuffer{};
+        std::string pending;
+        bool holding = false;
+        bool writing = false;
+    };
+
+    void pump(Direction& direction) {
+        direction.from.async_read_some(
+            boost::asio::buffer(direction.readBuffer),
+            [this, &direction](boost::system::error_code error,
+                               std::size_t length) {
+                if (error) {
+                    cut();
+                    return;
+                }
+                direction.pending.append(direction.readBuffer.data(), length);
+                flush(direction);
+                pump(direction);
+            });
+    }
+
+    void flush(Direction& direction) {
+        if (direction.holding || direction.writing ||
+            direction.pending.empty()) {
+            return;
+        }
+        direction.writing = true;
+        auto chunk =
+            std::make_shared<std::string>(std::move(direction.pending));
+        direction.pending.clear();
+        boost::asio::async_write(
+            direction.to, boost::asio::buffer(*chunk),
+            [this, &direction, chunk](boost::system::error_code error,
+                                      std::size_t /*length*/) {
+                direction.writing = false;
+                if (error) {
+                    cut();
+                    return;
+                }
+                flush(direction);
+            });
+    }
+
+    boost::asio::ip::tcp::acceptor acceptor;
+    boost::asio::ip::tcp::socket client;
+    boost::asio::ip::tcp::socket target;
+    Direction clientToTarget{client, target};
+    Direction targetToClient{target, client};
 };
 
 using TestFunction = std::function<void()>;
