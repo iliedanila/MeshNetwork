@@ -8,6 +8,12 @@ set(MESH_TESTS
     malformedFrameClosesOnlyThatConnection
     oversizedFrameIsRejected
     nodeConnectsToSeveralPeers
+    loggerPrintsItsOwnLogs
+    lateJoinerLearnsLogger
+    loggerRouteRecoversAfterLoggerRestarts
+    noSelfRoutesInTriangle
+    triangleWithLoggerGoesQuiet
+    departedNodeIsForgottenInRing
 )
 foreach(test IN LISTS MESH_TESTS)
     add_test(NAME mesh.${test} COMMAND meshTests ${test})

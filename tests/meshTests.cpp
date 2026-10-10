@@ -105,6 +105,127 @@ void nodeConnectsToSeveralPeers() {
     MESH_CHECK(runUntil(io, [&] { return seesAll(c, {"A", "B"}); }, 3s));
 }
 
+void loggerPrintsItsOwnLogs() {
+    CoutCapture out;
+    io_context io;
+    Node logger("L", io, true);
+
+    logger.log("hello");
+    MESH_CHECK(runUntil(io, [&] { return out.contains("-- L -- hello"); }, 1s));
+}
+
+void lateJoinerLearnsLogger() {
+    CoutCapture out;
+    io_context io;
+    Node logger("L", io, true), a("A", io), b("B", io);
+    logger.accept(47050);
+    a.accept(47051);
+
+    connectAndWait(io, a, 47050, logger);
+    connectAndWait(io, b, 47051, a);
+    MESH_CHECK(runUntil(io, [&] { return b.isNodeAccessible("L"); }));
+    MESH_CHECK(runUntil(
+        io,
+        [&] {
+            b.log("from B");
+            return out.contains("-- B -- from B");
+        },
+        2s));
+}
+
+void loggerRouteRecoversAfterLoggerRestarts() {
+    CoutCapture out;
+    io_context io;
+    auto logger = std::make_unique<Node>("L", io, true);
+    logger->accept(47060);
+    Node x("X", io), y("Y", io);
+    x.accept(47061);
+
+    connectAndWait(io, y, 47061, x);
+    x.connect("localhost", 47060, true);
+    MESH_CHECK(runUntil(io, [&] { return y.isNodeAccessible("L"); }));
+    MESH_CHECK(runUntil(io, [&] {
+        y.log("before");
+        return out.contains("-- Y -- before");
+    }));
+
+    logger->close();
+    MESH_CHECK(runUntil(io, [&] {
+        return !x.isNodeAccessible("L") && !y.isNodeAccessible("L");
+    }));
+    handlersRunIn(io, 200ms);
+    logger = std::make_unique<Node>("L", io, true);
+    logger->accept(47060);
+
+    MESH_CHECK(runUntil(io, [&] { return y.isNodeAccessible("L"); }, 4s));
+    MESH_CHECK(runUntil(
+        io,
+        [&] {
+            y.log("after");
+            return out.contains("-- Y -- after");
+        },
+        2s));
+}
+
+void noSelfRoutesInTriangle() {
+    io_context io;
+    Node a("A", io), b("B", io), c("C", io);
+    a.accept(47070);
+    b.accept(47071);
+    c.accept(47072);
+
+    connectAndWait(io, a, 47071, b);
+    connectAndWait(io, b, 47072, c);
+    MESH_CHECK(runUntil(io, [&] { return a.isNodeAccessible("C"); }));
+    connectAndWait(io, c, 47070, a);
+    MESH_CHECK(runUntilQuiet(io));
+
+    for (Node* node : {&a, &b, &c}) {
+        MESH_CHECK(!node->isNodeAccessible(node->getName()));
+        MESH_CHECK(node->getAccessibleNodes().size() == 2);
+    }
+}
+
+void triangleWithLoggerGoesQuiet() {
+    io_context io;
+    Node logger("L", io, true), x("X", io), y("Y", io);
+    logger.accept(47080);
+    x.accept(47081);
+    y.accept(47082);
+
+    connectAndWait(io, x, 47080, logger);
+    connectAndWait(io, y, 47081, x);
+    connectAndWait(io, logger, 47082, y);
+    MESH_CHECK(runUntilQuiet(io, 3s));
+}
+
+void departedNodeIsForgottenInRing() {
+    io_context io;
+    Node a("A", io), b("B", io), c("C", io), d("D", io), x("X", io);
+    a.accept(47090);
+    b.accept(47091);
+    c.accept(47092);
+    d.accept(47093);
+
+    connectAndWait(io, a, 47091, b);
+    connectAndWait(io, b, 47092, c);
+    connectAndWait(io, c, 47093, d);
+    connectAndWait(io, d, 47090, a);
+    connectAndWait(io, x, 47090, a);
+    MESH_CHECK(runUntil(io, [&] {
+        return seesAll(a, {"X"}) && seesAll(b, {"X"}) && seesAll(c, {"X"}) &&
+               seesAll(d, {"X"});
+    }));
+    MESH_CHECK(runUntilQuiet(io));
+
+    x.close();
+    MESH_CHECK(runUntilQuiet(io, 5s));
+    for (Node* node : {&a, &b, &c, &d}) {
+        MESH_CHECK(!node->isNodeAccessible("X"));
+        MESH_CHECK(node->getAccessibleNodes().size() == 3);
+    }
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -114,6 +235,13 @@ int main(int argc, char** argv) {
              malformedFrameClosesOnlyThatConnection},
             {"oversizedFrameIsRejected", oversizedFrameIsRejected},
             {"nodeConnectsToSeveralPeers", nodeConnectsToSeveralPeers},
+            {"loggerPrintsItsOwnLogs", loggerPrintsItsOwnLogs},
+            {"lateJoinerLearnsLogger", lateJoinerLearnsLogger},
+            {"loggerRouteRecoversAfterLoggerRestarts",
+             loggerRouteRecoversAfterLoggerRestarts},
+            {"noSelfRoutesInTriangle", noSelfRoutesInTriangle},
+            {"triangleWithLoggerGoesQuiet", triangleWithLoggerGoesQuiet},
+            {"departedNodeIsForgottenInRing", departedNodeIsForgottenInRing},
         },
         argc, argv);
 }

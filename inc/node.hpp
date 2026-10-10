@@ -17,7 +17,6 @@ using namespace boost::asio;
 using namespace ip;
 
 typedef std::shared_ptr<tcp::acceptor> SharedAcceptor;
-typedef std::pair<std::string, uint32_t> NodeDistance;
 
 namespace NetworkLayer {
 
@@ -79,24 +78,32 @@ class Node {
     template <typename MessageT>
     void handleMessage(MessageT&, SharedConnection);
 
-    void processAddNodePaths(RoutingMessage& message, RoutingMessage& reply,
-                             RoutingMessage& forward,
-                             SharedConnection connection);
+    // A route as this node holds it: the hops from the next hop (first) to
+    // the destination (last), and the connection to the next hop.
+    struct Route {
+        std::vector<std::string> path;
+        SharedConnection via;
+        bool isLogger;
+    };
 
-    void processFailedNodes(RoutingMessage& message, RoutingMessage& reply,
-                            RoutingMessage& forward,
+    void processAdverts(const RoutingMessage& message, RoutingMessage& reply,
+                        RoutingMessage& forward, SharedConnection connection);
+
+    void processFailedNodes(const RoutingMessage& message,
+                            RoutingMessage& reply, RoutingMessage& forward,
                             SharedConnection connection);
 
-    void processLogger(RoutingMessage& message, RoutingMessage& reply,
-                       RoutingMessage& forward);
+    void withdrawRoute(const std::string& destination, RoutingMessage& forward);
+
+    RouteAdvert advertise(const Route& route) const;
+
+    const std::string* nearestLogger() const;
 
     SharedConnection getConnectionToNode(const std::string& nodeName);
 
     std::string name;
     std::set<SharedConnection> connections;
-    std::map<std::string, uint32_t> nodeDistances;
-    std::pair<std::string, uint32_t> loggerDistance;
-    std::map<std::string, SharedConnection> nodePaths;
+    std::map<std::string, Route> routes;
     std::unordered_map<std::size_t, AckMessageCallback> ackCallbacks;
 
     std::unique_ptr<tcp::acceptor> acceptor;

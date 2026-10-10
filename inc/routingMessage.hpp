@@ -1,51 +1,56 @@
 #ifndef routingMessage_hpp
 #define routingMessage_hpp
 
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/utility.hpp>
+#include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <string>
 #include <vector>
 
 namespace NetworkLayer {
 
+// A route as its sender offers it: the hops from the sender (first) to the
+// destination (last). A receiver ignores any route that already contains it,
+// which is what keeps routes loop-free.
+struct RouteAdvert {
+    std::vector<std::string> path;
+    bool isLogger = false;
+
+    const std::string& destination() const { return path.back(); }
+
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & path;
+        ar & isLogger;
+    }
+};
+
 class RoutingMessage {
    public:
-    RoutingMessage() {}
+    const std::vector<RouteAdvert>& getAdverts() const { return adverts; }
 
-    ~RoutingMessage() {}
-
-    std::map<std::string, uint32_t> getNodeDistances() { return nodeDistances; }
-
-    std::vector<std::string> getFailedNodes() { return failedNodes; }
-
-    std::pair<std::string, uint32_t> getLoggerDistance() {
-        return loggerDistance;
+    const std::vector<std::string>& getFailedNodes() const {
+        return failedNodes;
     }
 
-    void addNodeDistance(std::pair<std::string, uint32_t> _nodeDistance) {
-        nodeDistances.insert(_nodeDistance);
+    void addAdvert(RouteAdvert advert) { adverts.push_back(std::move(advert)); }
+
+    void addFailedNode(std::string node) {
+        failedNodes.push_back(std::move(node));
     }
 
-    void addFailedNode(std::string node) { failedNodes.push_back(node); }
-
-    void addLogger(std::pair<std::string, uint32_t> _loggerDistance) {
-        loggerDistance = _loggerDistance;
-    }
+    bool empty() const { return adverts.empty() && failedNodes.empty(); }
 
    private:
     friend class boost::serialization::access;
 
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& nodeDistances;
-        ar& failedNodes;
-        ar& loggerDistance;
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & adverts;
+        ar & failedNodes;
     }
 
-   private:
-    std::map<std::string, uint32_t> nodeDistances;
+    std::vector<RouteAdvert> adverts;
     std::vector<std::string> failedNodes;
-    std::pair<std::string, uint32_t> loggerDistance;
 };
 
 }  // namespace NetworkLayer

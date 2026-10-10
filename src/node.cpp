@@ -3,6 +3,7 @@
 #include "connection.hpp"
 #include "messageVisitor.hpp"
 
+#include <algorithm>
 #include <boost/variant/apply_visitor.hpp>
 #include <chrono>
 #include <functional>
@@ -13,6 +14,25 @@
 using namespace boost::asio::ip;
 
 namespace NetworkLayer {
+
+namespace {
+
+bool pathContains(const std::vector<std::string>& path,
+                  const std::string& nodeName) {
+    return std::find(path.begin(), path.end(), nodeName) != path.end();
+}
+
+void printLog(int64_t millisecondsSinceEpoch, const std::string& source,
+              const std::string& text) {
+    std::chrono::time_point<std::chrono::system_clock> epoch;
+    auto logTime = std::chrono::system_clock::to_time_t(
+        epoch + std::chrono::milliseconds{millisecondsSinceEpoch});
+
+    std::cout << "LOG -- " << std::put_time(std::localtime(&logTime), "%F %T")
+              << " -- " << source << " -- " << text << "\n";
+}
+
+}  // namespace
 
 Node::Node(std::string _name, boost::asio::io_context& _ioservice,
            bool _isLogger)
@@ -113,14 +133,14 @@ void Node::close() {
 
 std::vector<std::string> Node::getAccessibleNodes() {
     std::vector<std::string> nodeList;
-    for (auto keyValue : nodeDistances) {
-        nodeList.push_back(keyValue.first);
+    for (const auto& [destination, route] : routes) {
+        nodeList.push_back(destination);
     }
     return nodeList;
 }
 
 bool Node::isNodeAccessible(const std::string& nodeName) {
-    return nodeDistances.find(nodeName) != nodeDistances.end();
+    return routes.find(nodeName) != routes.end();
 }
 
 void Node::notifyNewNodeStatus(
@@ -130,10 +150,7 @@ void Node::notifyNewNodeStatus(
 
 void Node::sndMessage(std::string destination, std::string data,
                       std::function<void(std::string, SendError)> callback) {
-    if (isNodeAccessible(destination)) {
-        auto namePath = nodePaths.find(destination);
-        auto connection = namePath->second;
-
+    if (auto connection = getConnectionToNode(destination)) {
         std::size_t messageID = std::hash<std::string>{}(data);
         DataMessage message(name, destination, data, messageID);
 
@@ -152,20 +169,14 @@ void Node::acceptMessages(std::function<void(DataMessage&)> callback) {
 
 void Node::closeConnection(SharedConnection connectionDown) {
     RoutingMessage nodesDown;
-    std::vector<std::string> toDelete;
-    for (auto nodePath : nodePaths) {
-        if (nodePath.second == connectionDown) {
-            nodesDown.addFailedNode(nodePath.first);
-            toDelete.push_back(nodePath.first);
+    std::vector<std::string> unreachable;
+    for (const auto& [destination, route] : routes) {
+        if (route.via == connectionDown) {
+            unreachable.push_back(destination);
         }
     }
-
-    for (auto nodeName : toDelete) {
-        if (notifyNewNodeStatusCallback) {
-            notifyNewNodeStatusCallback(nodeName, false);
-        }
-        nodePaths.erase(nodeName);
-        nodeDistances.erase(nodeName);
+    for (const auto& destination : unreachable) {
+        withdrawRoute(destination, nodesDown);
     }
 
     connectionDown->close();
@@ -187,14 +198,9 @@ void Node::closeConnection(SharedConnection connectionDown) {
 
 void Node::sendRoutingToNewConnection(SharedConnection connection) {
     RoutingMessage message;
-    message.addNodeDistance(std::make_pair(name, 0));
-
-    for (auto nodeDistance : nodeDistances) {
-        message.addNodeDistance(nodeDistance);
-    }
-
-    if (isLogger) {
-        message.addLogger(std::make_pair(name, 0));
+    message.addAdvert(RouteAdvert{{name}, isLogger});
+    for (const auto& [destination, route] : routes) {
+        message.addAdvert(advertise(route));
     }
 
     connection->send(message, std::bind(&Node::onWrite, this, message,
@@ -233,20 +239,15 @@ void Node::handleMessage(RoutingMessage& _message,
     RoutingMessage reply;
     RoutingMessage forward;
 
-    processAddNodePaths(_message, reply, forward, _connection);
+    processAdverts(_message, reply, forward, _connection);
     processFailedNodes(_message, reply, forward, _connection);
-    processLogger(_message, reply, forward);
 
-    if (reply.getNodeDistances().size() > 0 ||
-        reply.getFailedNodes().size() > 0 ||
-        reply.getLoggerDistance().first != "") {
+    if (!reply.empty()) {
         _connection->send(reply, std::bind(&Node::onWrite, this, reply,
                                            std::placeholders::_1));
     }
 
-    if (forward.getNodeDistances().size() > 0 ||
-        forward.getFailedNodes().size() > 0 ||
-        forward.getLoggerDistance().first != "") {
+    if (!forward.empty()) {
         for (auto conn : connections) {
             if (conn != _connection) {
                 conn->send(forward, std::bind(&Node::onWrite, this, forward,
@@ -274,9 +275,8 @@ void Node::handleMessage(DataMessage& _message, SharedConnection _connection) {
                                                  std::placeholders::_1));
         }
     } else {
-        if (isNodeAccessible(_message.destinationNodeName)) {
-            auto namePath = nodePaths.find(_message.destinationNodeName);
-            auto connection = namePath->second;
+        if (auto connection =
+                getConnectionToNode(_message.destinationNodeName)) {
             connection->send(_message, std::bind(&Node::onWrite, this, _message,
                                                  std::placeholders::_1));
         } else {
@@ -298,9 +298,8 @@ void Node::handleMessage(DataMessageAck& _message,
             ackCallbacks.erase(it);
         }
     } else {
-        if (isNodeAccessible(_message.destinationNodeName)) {
-            auto namePath = nodePaths.find(_message.destinationNodeName);
-            auto connection = namePath->second;
+        if (auto connection =
+                getConnectionToNode(_message.destinationNodeName)) {
             connection->send(_message, std::bind(&Node::onWrite, this, _message,
                                                  std::placeholders::_1));
         }
@@ -310,16 +309,8 @@ void Node::handleMessage(DataMessageAck& _message,
 template <>
 void Node::handleMessage(LogMessage& _message, SharedConnection _connection) {
     if (_message.getDestinationNodeName() == name) {
-        std::chrono::time_point<std::chrono::system_clock> epoch;
-        std::chrono::milliseconds millisecondsSinceEpoch{
-            _message.getMillisecondsSinceEpoch()};
-        auto logTime = std::chrono::system_clock::to_time_t(
-            epoch + millisecondsSinceEpoch);
-
-        std::cout << "LOG -- "
-                  << std::put_time(std::localtime(&logTime), "%F %T") << " -- "
-                  << _message.getSourceNodeName() << " -- "
-                  << _message.getLogMessage() << "\n";
+        printLog(_message.getMillisecondsSinceEpoch(),
+                 _message.getSourceNodeName(), _message.getLogMessage());
     } else {
         auto forwardConnection =
             getConnectionToNode(_message.getDestinationNodeName());
@@ -356,79 +347,94 @@ void Node::handleMessage(HandshakeReply& _message,
     sendRoutingToNewConnection(_connection);
 }
 
-void Node::processAddNodePaths(RoutingMessage& message, RoutingMessage& reply,
-                               RoutingMessage& forward,
-                               SharedConnection connection) {
-    for (auto nodeDistance : message.getNodeDistances()) {
-        auto it = nodeDistances.find(nodeDistance.first);
-        if (it == nodeDistances.end()) {
-            auto nodeDist =
-                std::make_pair(nodeDistance.first, nodeDistance.second + 1);
-            forward.addNodeDistance(nodeDist);
+void Node::processAdverts(const RoutingMessage& message, RoutingMessage& reply,
+                          RoutingMessage& forward,
+                          SharedConnection connection) {
+    for (const auto& advert : message.getAdverts()) {
+        if (advert.path.empty()) {
+            continue;
+        }
+        const auto& destination = advert.destination();
+        auto it = routes.find(destination);
 
-            nodeDistances.insert(nodeDist);
-            nodePaths.insert(std::make_pair(nodeDistance.first, connection));
+        if (pathContains(advert.path, name)) {
+            // The neighbour now routes through us, so the route it gave us
+            // earlier is gone. Adverts for ourselves end up here too.
+            if (it != routes.end() && it->second.via == connection) {
+                withdrawRoute(destination, forward);
+            }
+            continue;
+        }
 
-            // notify node owner of new node accessible.
+        if (it == routes.end()) {
+            auto& route = routes[destination];
+            route = Route{advert.path, connection, advert.isLogger};
+            forward.addAdvert(advertise(route));
             if (notifyNewNodeStatusCallback) {
-                boost::asio::post(ioservice,
-                                  std::bind(notifyNewNodeStatusCallback,
-                                            nodeDistance.first, true));
+                boost::asio::post(
+                    ioservice,
+                    std::bind(notifyNewNodeStatusCallback, destination, true));
             }
-        } else if (it->second > nodeDistance.second + 1) {
-            auto nodeDist =
-                std::make_pair(nodeDistance.first, nodeDistance.second + 1);
-            forward.addNodeDistance(nodeDist);
-
-            it->second = nodeDistance.second + 1;
-            auto itNodePath = nodePaths.find(nodeDistance.first);
-            itNodePath->second = connection;
-        } else if (it->second + 1 < nodeDistance.second) {
-            reply.addNodeDistance(*it);
+        } else if (it->second.via == connection ||
+                   advert.path.size() < it->second.path.size()) {
+            // Our next hop's current route replaces what it told us before;
+            // anyone else's route only wins by being shorter.
+            Route updated{advert.path, connection, advert.isLogger};
+            if (updated.path != it->second.path ||
+                updated.via != it->second.via) {
+                it->second = updated;
+                forward.addAdvert(advertise(it->second));
+            }
+        } else if (it->second.path.size() + 2 < advert.path.size()) {
+            // Going through us would be shorter for the neighbour (its advert
+            // counts itself, ours would count us).
+            reply.addAdvert(advertise(it->second));
         }
     }
 }
 
-void Node::processFailedNodes(RoutingMessage& message, RoutingMessage& reply,
-                              RoutingMessage& forward,
+void Node::processFailedNodes(const RoutingMessage& message,
+                              RoutingMessage& reply, RoutingMessage& forward,
                               SharedConnection connection) {
-    for (auto node : message.getFailedNodes()) {
-        auto it = nodePaths.find(node);
-        if (it != nodePaths.end()) {
-            if (it->second == connection) {
-                nodeDistances.erase(node);
-                nodePaths.erase(node);
-                forward.addFailedNode(node);
-                if (loggerDistance.first == node) {
-                    loggerDistance = std::make_pair("", 0);
-                }
-
-                // notify node owner of failed node
-                if (notifyNewNodeStatusCallback) {
-                    notifyNewNodeStatusCallback(node, false);
-                }
-            } else {
-                auto iterator = nodeDistances.find(node);
-                reply.addNodeDistance(*iterator);
-            }
+    for (const auto& node : message.getFailedNodes()) {
+        auto it = routes.find(node);
+        if (it == routes.end()) {
+            continue;
+        }
+        if (it->second.via == connection) {
+            withdrawRoute(node, forward);
+        } else {
+            reply.addAdvert(advertise(it->second));
         }
     }
 }
 
-void Node::processLogger(RoutingMessage& message, RoutingMessage& reply,
+void Node::withdrawRoute(const std::string& destination,
                          RoutingMessage& forward) {
-    auto messageLoggerDistance = message.getLoggerDistance();
+    routes.erase(destination);
+    forward.addFailedNode(destination);
+    if (notifyNewNodeStatusCallback) {
+        notifyNewNodeStatusCallback(destination, false);
+    }
+}
 
-    if (messageLoggerDistance.first != "") {
-        if (loggerDistance.first == "" ||
-            loggerDistance.second > messageLoggerDistance.second + 1) {
-            loggerDistance = messageLoggerDistance;
-            loggerDistance.second++;
-            forward.addLogger(loggerDistance);
-        } else if (loggerDistance.second < messageLoggerDistance.second + 1) {
-            reply.addLogger(loggerDistance);
+RouteAdvert Node::advertise(const Route& route) const {
+    RouteAdvert advert{{name}, route.isLogger};
+    advert.path.insert(advert.path.end(), route.path.begin(), route.path.end());
+    return advert;
+}
+
+const std::string* Node::nearestLogger() const {
+    const std::string* nearest = nullptr;
+    std::size_t nearestHops = 0;
+    for (const auto& [destination, route] : routes) {
+        if (route.isLogger &&
+            (nearest == nullptr || route.path.size() < nearestHops)) {
+            nearest = &destination;
+            nearestHops = route.path.size();
         }
     }
+    return nearest;
 }
 
 void Node::startConnection(SharedConnection connection, Connection::Type type) {
@@ -451,31 +457,29 @@ void Node::startConnection(SharedConnection connection, Connection::Type type) {
 }
 
 void Node::log(const std::string& logMessage) {
-    if (loggerDistance.first != "") {
-        auto millisecondsSinceEpoch =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
-        LogMessage message(millisecondsSinceEpoch, name, loggerDistance.first,
-                           logMessage);
-
-        auto connection = getConnectionToNode(loggerDistance.first);
-        if (connection) {
-            boost::asio::post(ioservice, [this, connection, message] {
-                connection->send(message,
-                                 std::bind(&Node::onWrite, this, message,
-                                           std::placeholders::_1));
-            });
-        }
+    auto millisecondsSinceEpoch =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    if (isLogger) {
+        printLog(millisecondsSinceEpoch, name, logMessage);
+        return;
     }
+
+    const std::string* logger = nearestLogger();
+    if (logger == nullptr) {
+        return;
+    }
+    LogMessage message(millisecondsSinceEpoch, name, *logger, logMessage);
+    auto connection = getConnectionToNode(*logger);
+    boost::asio::post(ioservice, [this, connection, message] {
+        connection->send(message, std::bind(&Node::onWrite, this, message,
+                                            std::placeholders::_1));
+    });
 }
 
 SharedConnection Node::getConnectionToNode(const std::string& nodeName) {
-    if (isNodeAccessible(nodeName)) {
-        auto namePath = nodePaths.find(nodeName);
-        auto connection = namePath->second;
-        return connection;
-    }
-    return nullptr;
+    auto it = routes.find(nodeName);
+    return it == routes.end() ? nullptr : it->second.via;
 }
 }  // namespace NetworkLayer
