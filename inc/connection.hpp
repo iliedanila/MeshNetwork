@@ -4,6 +4,8 @@
 #include <boost/asio.hpp>
 #include <deque>
 #include <memory>
+#include <optional>
+#include <string>
 
 #include "allMessages.hpp"
 #include "message.hpp"
@@ -20,12 +22,18 @@ typedef std::function<void(boost::system::error_code)> WriteCallback;
 typedef std::function<void(MessageVariant, SharedConnection)> ReadCallback;
 typedef std::deque<std::pair<Message, WriteCallback>> MessageQueue;
 
+// Where to reconnect after an outgoing connection drops.
+struct ReconnectTarget {
+    std::string host;
+    unsigned short port;
+};
+
 class Connection : public std::enable_shared_from_this<Connection> {
    public:
     enum Type { eAccepted, eConnected };
 
     Connection(Node& node, io_context& ioservice, tcp::socket&& socket,
-               bool reconnect,
+               std::optional<ReconnectTarget> reconnectTarget,
                std::function<void(std::shared_ptr<Connection>)> closeHandler);
 
     ~Connection();
@@ -40,17 +48,21 @@ class Connection : public std::enable_shared_from_this<Connection> {
 
     uint16_t getRemotePort() const { return remotePort; }
 
-    bool getReconnect() const { return reconnect; }
+    const std::optional<ReconnectTarget>& getReconnectTarget() const {
+        return reconnectTarget;
+    }
 
    private:
     void write();
+    void failQueuedWrites(boost::system::error_code error);
+    void closeAfterError();
 
     void readHeader(ReadCallback readCallback);
     void readBody(ReadCallback readCallback);
 
     io_context& ioservice;
     tcp::socket socket;
-    bool reconnect;
+    std::optional<ReconnectTarget> reconnectTarget;
     std::function<void(std::shared_ptr<Connection>)> closeHandler;
 
     std::string remoteIP;
@@ -59,6 +71,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
     Node& node;
     Message readMessage;
     MessageQueue writeMessages;
+    bool closedAfterError = false;
 };
 
 }  // namespace NetworkLayer

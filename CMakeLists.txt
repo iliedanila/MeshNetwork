@@ -15,3 +15,10 @@ file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "inc/*.hpp")
 
 add_library(MeshNetwork STATIC ${HEADERS} ${SOURCES})
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    include(CTest)
+endif()
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

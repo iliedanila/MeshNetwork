@@ -2,6 +2,7 @@
 #define node_hpp
 
 #include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <functional>
 #include <map>
 #include <set>
@@ -16,7 +17,6 @@ using namespace boost::asio;
 using namespace ip;
 
 typedef std::shared_ptr<tcp::acceptor> SharedAcceptor;
-typedef std::pair<std::string, uint32_t> NodeDistance;
 
 namespace NetworkLayer {
 
@@ -54,7 +54,8 @@ class Node {
    private:
     friend struct MessageVisitor;
 
-    SharedConnection addConnection(tcp::socket&& socket, bool reconnect);
+    SharedConnection addConnection(
+        tcp::socket&& socket, std::optional<ReconnectTarget> reconnectTarget);
 
     void startConnection(SharedConnection connection, Connection::Type type);
 
@@ -66,32 +67,55 @@ class Node {
 
     void onWrite(MessageVariant message, boost::system::error_code error) const;
 
-    void onReconnectTimer(std::shared_ptr<boost::asio::deadline_timer> timer,
+    void onConnectFailed(const std::string& host, unsigned short port,
+                         bool reconnect,
+                         const boost::system::error_code& error);
+
+    void onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
                           std::string host, unsigned short port,
                           const boost::system::error_code& error);
 
     template <typename MessageT>
     void handleMessage(MessageT&, SharedConnection);
 
-    void processAddNodePaths(RoutingMessage& message, RoutingMessage& reply,
-                             RoutingMessage& forward,
-                             SharedConnection connection);
+    // A route as this node holds it: the hops from the next hop (first) to
+    // the destination (last), and the connection to the next hop.
+    struct Route {
+        std::vector<std::string> path;
+        SharedConnection via;
+        bool isLogger;
+    };
 
-    void processFailedNodes(RoutingMessage& message, RoutingMessage& reply,
-                            RoutingMessage& forward,
+    void processAdverts(const RoutingMessage& message, RoutingMessage& reply,
+                        RoutingMessage& forward, SharedConnection connection);
+
+    void processFailedNodes(const RoutingMessage& message,
+                            RoutingMessage& reply, RoutingMessage& forward,
                             SharedConnection connection);
 
-    void processLogger(RoutingMessage& message, RoutingMessage& reply,
-                       RoutingMessage& forward);
+    void withdrawRoute(const std::string& destination, RoutingMessage& forward);
+
+    RouteAdvert advertise(const Route& route) const;
+
+    const std::string* nearestLogger() const;
+
+    void completePendingSend(uint64_t messageID, SendError error);
+
+    void failPendingSends(const std::string& destination);
 
     SharedConnection getConnectionToNode(const std::string& nodeName);
 
     std::string name;
     std::set<SharedConnection> connections;
-    std::map<std::string, uint32_t> nodeDistances;
-    std::pair<std::string, uint32_t> loggerDistance;
-    std::map<std::string, SharedConnection> nodePaths;
-    std::unordered_map<std::size_t, AckMessageCallback> ackCallbacks;
+    std::map<std::string, Route> routes;
+
+    struct PendingSend {
+        std::string destination;
+        AckMessageCallback callback;
+    };
+
+    std::unordered_map<uint64_t, PendingSend> pendingSends;
+    uint64_t lastMessageID = 0;
 
     std::unique_ptr<tcp::acceptor> acceptor;
 
@@ -99,7 +123,6 @@ class Node {
     std::function<void(DataMessage&)> messageAcceptor;
     NewNodeStatusCallbackT notifyNewNodeStatusCallback;
 
-    tcp::socket connect_socket;
     tcp::socket accept_socket;
     io_context& ioservice;
     bool isLogger;

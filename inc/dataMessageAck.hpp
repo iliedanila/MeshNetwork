@@ -4,6 +4,8 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
+#include <cstdint>
+
 #include "sendError.hpp"
 
 namespace NetworkLayer {
@@ -15,7 +17,7 @@ class DataMessageAck {
     ~DataMessageAck() {}
 
     explicit DataMessageAck(std::string source, std::string destination,
-                            SendError _error, std::size_t _messageID)
+                            SendError _error, uint64_t _messageID)
         : sourceNodeName(std::move(source)),
           destinationNodeName(std::move(destination)),
           error(_error),
@@ -37,7 +39,7 @@ class DataMessageAck {
     std::string sourceNodeName;
     std::string destinationNodeName;
     SendError error;
-    std::size_t messageID;
+    uint64_t messageID;
 };
 
 }  // namespace NetworkLayer

@@ -13,15 +13,22 @@ namespace NetworkLayer {
 
 Connection::Connection(
     Node& _node, boost::asio::io_context& _ioservice, tcp::socket&& _socket,
-    bool _reconnect,
+    std::optional<ReconnectTarget> _reconnectTarget,
     std::function<void(std::shared_ptr<Connection>)> _closeHandler)
     : ioservice(_ioservice),
       socket(std::move(_socket)),
-      reconnect(_reconnect),
+      reconnectTarget(std::move(_reconnectTarget)),
       closeHandler(_closeHandler),
-      remoteIP(socket.remote_endpoint().address().to_string()),
-      remotePort(socket.remote_endpoint().port()),
-      node(_node) {}
+      remotePort(0),
+      node(_node) {
+    // The peer may already be gone; that surfaces on the first read.
+    boost::system::error_code error;
+    auto endpoint = socket.remote_endpoint(error);
+    if (!error) {
+        remoteIP = endpoint.address().to_string();
+        remotePort = endpoint.port();
+    }
+}
 
 Connection::~Connection() {}
 
@@ -33,16 +40,40 @@ void Connection::write() {
         buffer(writeMessages.front().first.getOutputBuffer(),
                writeMessages.front().first.getOutputBuffer().size()),
         [this, self](boost::system::error_code error, uint32_t /*lenght*/) {
-            if (!error) {
-                // Callback.
-                writeMessages.front().second(error);
+            if (error) {
+                failQueuedWrites(error);
+                closeAfterError();
+                return;
+            }
+            writeMessages.front().second(error);
 
-                writeMessages.pop_front();
-                if (!writeMessages.empty()) {
-                    write();
-                }
+            writeMessages.pop_front();
+            if (!writeMessages.empty()) {
+                write();
             }
         });
+}
+
+void Connection::failQueuedWrites(boost::system::error_code error) {
+    MessageQueue failed;
+    failed.swap(writeMessages);
+    for (auto& queued : failed) {
+        queued.second(error);
+    }
+}
+
+// Hands the connection to the owner's close handler exactly once, whichever
+// of the read or write paths notices the failure first.
+void Connection::closeAfterError() {
+    if (closedAfterError) {
+        return;
+    }
+    closedAfterError = true;
+    if (closeHandler) {
+        closeHandler(shared_from_this());
+    } else {
+        close();
+    }
 }
 
 void Connection::read(ReadCallback _callback) {
@@ -53,6 +84,13 @@ void Connection::send(MessageVariant _message, WriteCallback _callback) {
     std::stringstream ss;
     boost::archive::binary_oarchive oarchive(ss);
     oarchive << _message;
+
+    if (ss.str().size() > Message::eMaxBodyLength) {
+        boost::asio::post(ioservice, [_callback] {
+            _callback(boost::asio::error::message_size);
+        });
+        return;
+    }
 
     Message message(ss.str());
     message.createOutputBuffer();
@@ -66,7 +104,8 @@ void Connection::send(MessageVariant _message, WriteCallback _callback) {
 }
 
 void Connection::close() {
-    socket.close();
+    boost::system::error_code ignored;
+    socket.close(ignored);
 }
 
 void Connection::readHeader(ReadCallback _callback) {
@@ -76,15 +115,16 @@ void Connection::readHeader(ReadCallback _callback) {
         socket, buffer(readMessage.getHeader(), Message::eHeaderLength),
         [this, self, _callback](boost::system::error_code error_code,
                                 uint32_t length) {
-            if (!error_code) {
-                readMessage.decodeHeader();
-                readBody(_callback);
-            } else {
+            if (error_code) {
                 std::cout << "Error reading header: " << error_code.message()
                           << "\n";
-                if (closeHandler) {
-                    closeHandler(self);
-                }
+                closeAfterError();
+            } else if (!readMessage.decodeHeader()) {
+                node.log("Closing connection to " + remoteIP +
+                         ": frame exceeds the size limit");
+                closeAfterError();
+            } else {
+                readBody(_callback);
             }
         });
 }
@@ -96,24 +136,29 @@ void Connection::readBody(ReadCallback _callback) {
         socket, buffer(readMessage.getBody(), readMessage.getBodySize()),
         [this, self, _callback](boost::system::error_code error_code,
                                 uint32_t /*length*/) {
-            if (!error_code) {
+            if (error_code) {
+                std::cout << "Error reading body: " << error_code.message()
+                          << "\n";
+                closeAfterError();
+                return;
+            }
+
+            MessageVariant message;
+            try {
                 std::string content(readMessage.getBody().begin(),
                                     readMessage.getBody().end());
                 std::stringstream ss(content);
                 boost::archive::binary_iarchive iarchive(ss);
-
-                MessageVariant message;
                 iarchive >> message;
-
-                _callback(message, self);
-                readHeader(_callback);
-            } else {
-                std::cout << "Error reading body: " << error_code.message()
-                          << "\n";
-                if (closeHandler) {
-                    closeHandler(self);
-                }
+            } catch (const std::exception& error) {
+                node.log("Closing connection to " + remoteIP +
+                         ": undecodable frame (" + error.what() + ")");
+                closeAfterError();
+                return;
             }
+
+            _callback(message, self);
+            readHeader(_callback);
         });
 }
 
