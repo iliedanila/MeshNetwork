@@ -7,6 +7,7 @@ target_link_libraries(meshTests MeshNetwork Boost::serialization Threads::Thread
 set(MESH_TESTS
     malformedFrameClosesOnlyThatConnection
     oversizedFrameIsRejected
+    nodeConnectsToSeveralPeers
 )
 foreach(test IN LISTS MESH_TESTS)
     add_test(NAME mesh.${test} COMMAND meshTests ${test})

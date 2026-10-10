@@ -18,7 +18,6 @@ Node::Node(std::string _name, boost::asio::io_context& _ioservice,
            bool _isLogger)
     : name(std::move(_name)),
       closing(false),
-      connect_socket(_ioservice),
       accept_socket(_ioservice),
       ioservice(_ioservice),
       isLogger(_isLogger) {}
@@ -36,7 +35,7 @@ void Node::accept(unsigned short _port) {
         accept_socket, [this, _port](const boost::system::error_code& error) {
             if (!error) {
                 auto connection =
-                    addConnection(std::move(accept_socket), false);
+                    addConnection(std::move(accept_socket), std::nullopt);
 
                 startConnection(connection, Connection::eAccepted);
             } else {
@@ -49,34 +48,57 @@ void Node::accept(unsigned short _port) {
         });
 }
 
+// Each attempt owns its resolver and socket, so several connects can be in
+// flight at once, and name resolution never blocks the loop.
 void Node::connect(std::string host, unsigned short port, bool reconnect) {
-    tcp::resolver resolver(ioservice);
-    auto endpoint = resolver.resolve(host, std::to_string(port));
-
-    boost::asio::async_connect(
-        connect_socket, endpoint,
-        [this, reconnect, host, port](const boost::system::error_code& error,
-                                      tcp::endpoint) {
-            if (!error) {
-                auto connection =
-                    addConnection(std::move(connect_socket), reconnect);
-
-                startConnection(connection, Connection::eConnected);
-            } else {
-                std::cout << name << " error connecting: " << error.message()
-                          << "\n";
-                if (reconnect && !closing) {
-                    std::cout << "Reconnecting...\n";
-
-                    auto reconnectTimer =
-                        std::make_shared<boost::asio::steady_timer>(ioservice);
-                    reconnectTimer->expires_after(std::chrono::seconds(1));
-                    reconnectTimer->async_wait(
-                        std::bind(&Node::onReconnectTimer, this, reconnectTimer,
-                                  host, port, std::placeholders::_1));
-                }
+    auto resolver = std::make_shared<tcp::resolver>(ioservice);
+    resolver->async_resolve(
+        host, std::to_string(port),
+        [this, resolver, host, port, reconnect](
+            const boost::system::error_code& error,
+            tcp::resolver::results_type endpoints) {
+            if (error) {
+                onConnectFailed(host, port, reconnect, error);
+                return;
             }
+            auto socket = std::make_shared<tcp::socket>(ioservice);
+            boost::asio::async_connect(
+                *socket, endpoints,
+                [this, socket, host, port, reconnect](
+                    const boost::system::error_code& error,
+                    const tcp::endpoint& /*endpoint*/) {
+                    if (error) {
+                        onConnectFailed(host, port, reconnect, error);
+                        return;
+                    }
+                    if (closing) {
+                        return;
+                    }
+                    std::optional<ReconnectTarget> reconnectTarget;
+                    if (reconnect) {
+                        reconnectTarget = ReconnectTarget{host, port};
+                    }
+                    auto connection =
+                        addConnection(std::move(*socket), reconnectTarget);
+                    startConnection(connection, Connection::eConnected);
+                });
         });
+}
+
+void Node::onConnectFailed(const std::string& host, unsigned short port,
+                           bool reconnect,
+                           const boost::system::error_code& error) {
+    std::cout << name << " error connecting: " << error.message() << "\n";
+    if (!reconnect || closing) {
+        return;
+    }
+    std::cout << "Reconnecting...\n";
+    auto reconnectTimer =
+        std::make_shared<boost::asio::steady_timer>(ioservice);
+    reconnectTimer->expires_after(std::chrono::seconds(1));
+    reconnectTimer->async_wait(std::bind(&Node::onReconnectTimer, this,
+                                         reconnectTimer, host, port,
+                                         std::placeholders::_1));
 }
 
 void Node::close() {
@@ -158,9 +180,8 @@ void Node::closeConnection(SharedConnection connectionDown) {
                                               std::placeholders::_1));
     }
 
-    if (connectionDown->getReconnect()) {
-        connect(connectionDown->getRemoteIP(), connectionDown->getRemotePort(),
-                true);
+    if (const auto& target = connectionDown->getReconnectTarget()) {
+        connect(target->host, target->port, true);
     }
 }
 
@@ -180,9 +201,10 @@ void Node::sendRoutingToNewConnection(SharedConnection connection) {
                                         std::placeholders::_1));
 }
 
-SharedConnection Node::addConnection(tcp::socket&& socket, bool reconnect) {
+SharedConnection Node::addConnection(
+    tcp::socket&& socket, std::optional<ReconnectTarget> reconnectTarget) {
     auto connection = std::make_shared<Connection>(
-        *this, ioservice, std::move(socket), reconnect,
+        *this, ioservice, std::move(socket), std::move(reconnectTarget),
         std::bind(&Node::closeConnection, this, std::placeholders::_1));
 
     connections.insert(connection);
@@ -200,7 +222,7 @@ void Node::onWrite(MessageVariant message,
 void Node::onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
                             std::string host, unsigned short port,
                             const boost::system::error_code& error) {
-    if (!error) {
+    if (!error && !closing) {
         connect(host, port, true);
     }
 }

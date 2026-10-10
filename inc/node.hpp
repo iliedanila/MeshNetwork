@@ -55,7 +55,8 @@ class Node {
    private:
     friend struct MessageVisitor;
 
-    SharedConnection addConnection(tcp::socket&& socket, bool reconnect);
+    SharedConnection addConnection(
+        tcp::socket&& socket, std::optional<ReconnectTarget> reconnectTarget);
 
     void startConnection(SharedConnection connection, Connection::Type type);
 
@@ -66,6 +67,10 @@ class Node {
     void onRead(MessageVariant, SharedConnection);
 
     void onWrite(MessageVariant message, boost::system::error_code error) const;
+
+    void onConnectFailed(const std::string& host, unsigned short port,
+                         bool reconnect,
+                         const boost::system::error_code& error);
 
     void onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
                           std::string host, unsigned short port,
@@ -100,7 +105,6 @@ class Node {
     std::function<void(DataMessage&)> messageAcceptor;
     NewNodeStatusCallbackT notifyNewNodeStatusCallback;
 
-    tcp::socket connect_socket;
     tcp::socket accept_socket;
     io_context& ioservice;
     bool isLogger;

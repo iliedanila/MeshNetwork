@@ -13,11 +13,11 @@ namespace NetworkLayer {
 
 Connection::Connection(
     Node& _node, boost::asio::io_context& _ioservice, tcp::socket&& _socket,
-    bool _reconnect,
+    std::optional<ReconnectTarget> _reconnectTarget,
     std::function<void(std::shared_ptr<Connection>)> _closeHandler)
     : ioservice(_ioservice),
       socket(std::move(_socket)),
-      reconnect(_reconnect),
+      reconnectTarget(std::move(_reconnectTarget)),
       closeHandler(_closeHandler),
       remotePort(0),
       node(_node) {

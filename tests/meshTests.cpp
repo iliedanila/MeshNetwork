@@ -18,6 +18,15 @@ using NetworkLayer::SendError;
 
 namespace {
 
+bool seesAll(Node& node, std::initializer_list<std::string> names) {
+    for (const auto& name : names) {
+        if (!node.isNodeAccessible(name)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void connectAndWait(io_context& io, Node& from, unsigned short port, Node& to) {
     from.connect("localhost", port);
     MESH_CHECK(runUntil(io, [&] {
@@ -85,6 +94,17 @@ void oversizedFrameIsRejected() {
     MESH_CHECK(runUntil(io, [&] { return raw.closedByPeer(); }, 2s));
 }
 
+void nodeConnectsToSeveralPeers() {
+    io_context io;
+    Node a("A", io), b("B", io), c("C", io);
+    a.accept(47030);
+    b.accept(47031);
+
+    c.connect("localhost", 47030);
+    c.connect("localhost", 47031);
+    MESH_CHECK(runUntil(io, [&] { return seesAll(c, {"A", "B"}); }, 3s));
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -93,6 +113,7 @@ int main(int argc, char** argv) {
             {"malformedFrameClosesOnlyThatConnection",
              malformedFrameClosesOnlyThatConnection},
             {"oversizedFrameIsRejected", oversizedFrameIsRejected},
+            {"nodeConnectsToSeveralPeers", nodeConnectsToSeveralPeers},
         },
         argc, argv);
 }
