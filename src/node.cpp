@@ -150,17 +150,21 @@ void Node::notifyNewNodeStatus(
 
 void Node::sndMessage(std::string destination, std::string data,
                       std::function<void(std::string, SendError)> callback) {
-    if (auto connection = getConnectionToNode(destination)) {
-        std::size_t messageID = std::hash<std::string>{}(data);
-        DataMessage message(name, destination, data, messageID);
-
-        connection->send(message, std::bind(&Node::onWrite, this, message,
-                                            std::placeholders::_1));
-
-        ackCallbacks.insert({messageID, callback});
-    } else {
+    auto connection = getConnectionToNode(destination);
+    if (!connection) {
         callback(destination, eNoPath);
+        return;
     }
+
+    auto messageID = ++lastMessageID;
+    pendingSends[messageID] = PendingSend{destination, callback};
+    DataMessage message(name, destination, std::move(data), messageID);
+    connection->send(message,
+                     [this, messageID](boost::system::error_code error) {
+                         if (error == boost::asio::error::message_size) {
+                             completePendingSend(messageID, eMessageTooLarge);
+                         }
+                     });
 }
 
 void Node::acceptMessages(std::function<void(DataMessage&)> callback) {
@@ -262,25 +266,22 @@ void Node::handleMessage(DataMessage& _message, SharedConnection _connection) {
     _message.distance++;
 
     if (_message.destinationNodeName == name) {
+        SendError result = eNodeNotAccepting;
         if (messageAcceptor) {
             messageAcceptor(_message);
-            DataMessageAck message(name, _message.sourceNodeName, eSuccess,
-                                   _message.getMessageID());
-            _connection->send(message, std::bind(&Node::onWrite, this, message,
-                                                 std::placeholders::_1));
-        } else {
-            DataMessageAck message(_message.sourceNodeName, name,
-                                   eNodeNotAccepting, _message.getMessageID());
-            _connection->send(message, std::bind(&Node::onWrite, this, message,
-                                                 std::placeholders::_1));
+            result = eSuccess;
         }
+        DataMessageAck message(name, _message.sourceNodeName, result,
+                               _message.getMessageID());
+        _connection->send(message, std::bind(&Node::onWrite, this, message,
+                                             std::placeholders::_1));
     } else {
         if (auto connection =
                 getConnectionToNode(_message.destinationNodeName)) {
             connection->send(_message, std::bind(&Node::onWrite, this, _message,
                                                  std::placeholders::_1));
         } else {
-            DataMessageAck message(_message.sourceNodeName, name, eNoPath,
+            DataMessageAck message(name, _message.sourceNodeName, eNoPath,
                                    _message.getMessageID());
             _connection->send(message, std::bind(&Node::onWrite, this, message,
                                                  std::placeholders::_1));
@@ -292,11 +293,7 @@ template <>
 void Node::handleMessage(DataMessageAck& _message,
                          SharedConnection _connection) {
     if (_message.destinationNodeName == name) {
-        auto it = ackCallbacks.find(_message.messageID);
-        if (it != ackCallbacks.end()) {
-            it->second(_message.sourceNodeName, _message.error);
-            ackCallbacks.erase(it);
-        }
+        completePendingSend(_message.messageID, _message.error);
     } else {
         if (auto connection =
                 getConnectionToNode(_message.destinationNodeName)) {
@@ -413,6 +410,7 @@ void Node::withdrawRoute(const std::string& destination,
                          RoutingMessage& forward) {
     routes.erase(destination);
     forward.addFailedNode(destination);
+    failPendingSends(destination);
     if (notifyNewNodeStatusCallback) {
         notifyNewNodeStatusCallback(destination, false);
     }
@@ -422,6 +420,30 @@ RouteAdvert Node::advertise(const Route& route) const {
     RouteAdvert advert{{name}, route.isLogger};
     advert.path.insert(advert.path.end(), route.path.begin(), route.path.end());
     return advert;
+}
+
+// Reports a send's outcome once; whichever of the ack or a route failure
+// arrives second finds nothing to report.
+void Node::completePendingSend(uint64_t messageID, SendError error) {
+    auto it = pendingSends.find(messageID);
+    if (it == pendingSends.end()) {
+        return;
+    }
+    auto pending = std::move(it->second);
+    pendingSends.erase(it);
+    pending.callback(pending.destination, error);
+}
+
+// The message or its ack may have been on the lost route; without a route
+// the sender would otherwise never hear back.
+void Node::failPendingSends(const std::string& destination) {
+    for (const auto& [messageID, pending] : pendingSends) {
+        if (pending.destination == destination) {
+            boost::asio::post(ioservice, [this, messageID = messageID] {
+                completePendingSend(messageID, eNoPath);
+            });
+        }
+    }
 }
 
 const std::string* Node::nearestLogger() const {

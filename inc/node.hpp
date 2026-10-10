@@ -99,12 +99,23 @@ class Node {
 
     const std::string* nearestLogger() const;
 
+    void completePendingSend(uint64_t messageID, SendError error);
+
+    void failPendingSends(const std::string& destination);
+
     SharedConnection getConnectionToNode(const std::string& nodeName);
 
     std::string name;
     std::set<SharedConnection> connections;
     std::map<std::string, Route> routes;
-    std::unordered_map<std::size_t, AckMessageCallback> ackCallbacks;
+
+    struct PendingSend {
+        std::string destination;
+        AckMessageCallback callback;
+    };
+
+    std::unordered_map<uint64_t, PendingSend> pendingSends;
+    uint64_t lastMessageID = 0;
 
     std::unique_ptr<tcp::acceptor> acceptor;
 

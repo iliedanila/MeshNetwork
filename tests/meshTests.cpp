@@ -68,6 +68,11 @@ class RawClient {
     bool closed = false;
 };
 
+struct SendResult {
+    std::string nodeName;
+    SendError error;
+};
+
 void malformedFrameClosesOnlyThatConnection() {
     io_context io;
     Node a("A", io);
@@ -226,6 +231,80 @@ void departedNodeIsForgottenInRing() {
     }
 }
 
+void notAcceptingDestinationReportsError() {
+    io_context io;
+    Node a("A", io), b("B", io), c("C", io);  // C never calls acceptMessages
+    b.accept(47101);
+    c.accept(47102);
+    connectAndWait(io, a, 47101, b);
+    connectAndWait(io, b, 47102, c);
+    MESH_CHECK(runUntil(io, [&] { return a.isNodeAccessible("C"); }));
+
+    std::optional<SendResult> result;
+    a.sndMessage("C", "hi", [&](std::string nodeName, SendError error) {
+        result = SendResult{nodeName, error};
+    });
+    MESH_CHECK(runUntil(io, [&] { return result.has_value(); }, 2s));
+    MESH_CHECK(result->nodeName == "C");
+    MESH_CHECK(result->error == NetworkLayer::eNodeNotAccepting);
+}
+
+void sendFailsWhenDestinationDisappears() {
+    io_context io;
+    Node a("A", io), b("B", io), c("C", io);
+    c.acceptMessages([](DataMessage&) {});
+    b.accept(47111);
+    c.accept(47112);
+    connectAndWait(io, a, 47111, b);
+    connectAndWait(io, b, 47112, c);
+    MESH_CHECK(runUntil(io, [&] { return a.isNodeAccessible("C"); }));
+
+    std::optional<SendResult> result;
+    c.close();
+    a.sndMessage("C", "hi", [&](std::string nodeName, SendError error) {
+        result = SendResult{nodeName, error};
+    });
+    MESH_CHECK(runUntil(io, [&] { return result.has_value(); }, 3s));
+    MESH_CHECK(result->nodeName == "C");
+    MESH_CHECK(result->error == NetworkLayer::eNoPath);
+}
+
+void identicalPayloadsAreEachAcknowledged() {
+    io_context io;
+    Node a("A", io), b("B", io);
+    b.acceptMessages([](DataMessage&) {});
+    b.accept(47121);
+    connectAndWait(io, a, 47121, b);
+
+    int acknowledged = 0;
+    for (int i = 0; i < 2; ++i) {
+        a.sndMessage("B", "same", [&](std::string, SendError error) {
+            if (error == NetworkLayer::eSuccess) {
+                ++acknowledged;
+            }
+        });
+    }
+    MESH_CHECK(runUntil(io, [&] { return acknowledged == 2; }, 2s));
+}
+
+void oversizedSendReportsError() {
+    io_context io;
+    Node a("A", io), b("B", io);
+    b.acceptMessages([](DataMessage&) {});
+    b.accept(47131);
+    connectAndWait(io, a, 47131, b);
+
+    std::optional<SendResult> result;
+    a.sndMessage("B", std::string(17 * 1024 * 1024, 'x'),
+                 [&](std::string nodeName, SendError error) {
+                     result = SendResult{nodeName, error};
+                 });
+    MESH_CHECK(runUntil(io, [&] { return result.has_value(); }, 2s));
+    MESH_CHECK(result->nodeName == "B");
+    MESH_CHECK(result->error == NetworkLayer::eMessageTooLarge);
+    MESH_CHECK(a.isNodeAccessible("B"));
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -242,6 +321,13 @@ int main(int argc, char** argv) {
             {"noSelfRoutesInTriangle", noSelfRoutesInTriangle},
             {"triangleWithLoggerGoesQuiet", triangleWithLoggerGoesQuiet},
             {"departedNodeIsForgottenInRing", departedNodeIsForgottenInRing},
+            {"notAcceptingDestinationReportsError",
+             notAcceptingDestinationReportsError},
+            {"sendFailsWhenDestinationDisappears",
+             sendFailsWhenDestinationDisappears},
+            {"identicalPayloadsAreEachAcknowledged",
+             identicalPayloadsAreEachAcknowledged},
+            {"oversizedSendReportsError", oversizedSendReportsError},
         },
         argc, argv);
 }

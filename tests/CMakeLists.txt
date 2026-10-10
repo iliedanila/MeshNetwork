@@ -14,6 +14,10 @@ set(MESH_TESTS
     noSelfRoutesInTriangle
     triangleWithLoggerGoesQuiet
     departedNodeIsForgottenInRing
+    notAcceptingDestinationReportsError
+    sendFailsWhenDestinationDisappears
+    identicalPayloadsAreEachAcknowledged
+    oversizedSendReportsError
 )
 foreach(test IN LISTS MESH_TESTS)
     add_test(NAME mesh.${test} COMMAND meshTests ${test})
