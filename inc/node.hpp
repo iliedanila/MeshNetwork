@@ -2,6 +2,7 @@
 #define node_hpp
 
 #include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <functional>
 #include <map>
 #include <set>
@@ -66,7 +67,7 @@ class Node {
 
     void onWrite(MessageVariant message, boost::system::error_code error) const;
 
-    void onReconnectTimer(std::shared_ptr<boost::asio::deadline_timer> timer,
+    void onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
                           std::string host, unsigned short port,
                           const boost::system::error_code& error);
 

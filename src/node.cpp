@@ -69,10 +69,8 @@ void Node::connect(std::string host, unsigned short port, bool reconnect) {
                     std::cout << "Reconnecting...\n";
 
                     auto reconnectTimer =
-                        std::make_shared<boost::asio::deadline_timer>(
-                            ioservice);
-                    reconnectTimer->expires_from_now(
-                        boost::posix_time::seconds(1));
+                        std::make_shared<boost::asio::steady_timer>(ioservice);
+                    reconnectTimer->expires_after(std::chrono::seconds(1));
                     reconnectTimer->async_wait(
                         std::bind(&Node::onReconnectTimer, this, reconnectTimer,
                                   host, port, std::placeholders::_1));
@@ -199,7 +197,7 @@ void Node::onRead(MessageVariant _message, SharedConnection _connection) {
 void Node::onWrite(MessageVariant message,
                    boost::system::error_code error) const {}
 
-void Node::onReconnectTimer(std::shared_ptr<boost::asio::deadline_timer> timer,
+void Node::onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
                             std::string host, unsigned short port,
                             const boost::system::error_code& error) {
     if (!error) {
