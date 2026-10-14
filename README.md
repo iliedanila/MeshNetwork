@@ -1,8 +1,9 @@
 # MeshNetwork
 A network of self-routing nodes. Used to transfer data asynchronously over TCP.
 
-In order to run this, you'll need a C++20 compiler and `boost` (latest version is recommended), download from http://www.boost.org/
-and build it using the default output path: on windows it should be `C:\Boost` and on Unix `/usr/local`
+In order to run this, you'll need CMake 3.25 or newer, a C++20 compiler and `boost` with its compiled
+`serialization` library and the CMake package files Boost installs, from a package manager or from
+http://www.boost.org/. If CMake doesn't find Boost, pass `-DCMAKE_PREFIX_PATH=<where Boost is installed>`.
 
 Build and test on its own with
 `cmake -S . -B build && cmake --build build && (cd build && ctest)`.

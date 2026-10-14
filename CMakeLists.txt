@@ -1,24 +1,41 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.25...4.4)
 
-project(MeshNetwork)
-
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIR})
+project(MeshNetwork LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# No C++20 modules here, so skip the dependency scan CMake 3.28+ runs on
+# every C++20 source.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-include_directories(inc)
-# include_directories(boost/inc)
+find_package(Boost CONFIG REQUIRED COMPONENTS serialization)
+find_package(Threads REQUIRED)
 
-file(GLOB SOURCES "src/*.cpp")
-file(GLOB HEADERS "inc/*.hpp")
+add_library(MeshNetwork STATIC
+    src/connection.cpp
+    src/node.cpp
+    inc/allMessages.hpp
+    inc/connection.hpp
+    inc/dataMessage.hpp
+    inc/dataMessageAck.hpp
+    inc/handshake.hpp
+    inc/handshakeReply.hpp
+    inc/logMessage.hpp
+    inc/message.hpp
+    inc/messageVisitor.hpp
+    inc/node.hpp
+    inc/routingMessage.hpp
+    inc/sendError.hpp
+)
+# The headers include Boost.Asio and Boost.Serialization, so anything that
+# links MeshNetwork needs them too, and C++20 with them.
+target_include_directories(MeshNetwork PUBLIC inc)
+target_compile_features(MeshNetwork PUBLIC cxx_std_20)
+target_link_libraries(MeshNetwork
+    PUBLIC Boost::headers Boost::serialization Threads::Threads)
 
-add_library(MeshNetwork STATIC ${HEADERS} ${SOURCES})
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+if(PROJECT_IS_TOP_LEVEL)
     include(CTest)
 endif()
 if(BUILD_TESTING)

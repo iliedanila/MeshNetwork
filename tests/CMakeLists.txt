@@ -1,8 +1,11 @@
-find_package(Boost REQUIRED COMPONENTS serialization)
-find_package(Threads REQUIRED)
+# testSupport.hpp, also for projects that build MeshNetwork as a subproject
+# and test their own code on top of it.
+add_library(MeshNetworkTestSupport INTERFACE testSupport.hpp)
+target_include_directories(MeshNetworkTestSupport INTERFACE .)
+target_link_libraries(MeshNetworkTestSupport INTERFACE Boost::headers)
 
 add_executable(meshTests meshTests.cpp)
-target_link_libraries(meshTests MeshNetwork Boost::serialization Threads::Threads)
+target_link_libraries(meshTests PRIVATE MeshNetwork MeshNetworkTestSupport)
 
 set(MESH_TESTS
     malformedFrameClosesOnlyThatConnection
