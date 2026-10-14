@@ -5,7 +5,8 @@ target_include_directories(MeshNetworkTestSupport INTERFACE .)
 target_link_libraries(MeshNetworkTestSupport INTERFACE Boost::headers)
 
 add_executable(meshTests meshTests.cpp)
-target_link_libraries(meshTests PRIVATE MeshNetwork MeshNetworkTestSupport)
+target_link_libraries(meshTests
+    PRIVATE MeshNetwork MeshNetworkTestSupport MeshNetworkWarnings)
 
 set(MESH_TESTS
     malformedFrameClosesOnlyThatConnection

@@ -14,6 +14,13 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 find_package(Boost 1.84 CONFIG REQUIRED COMPONENTS serialization)
 find_package(Threads REQUIRED)
 
+# Warnings for MeshNetwork's own code; Boost's headers come in as system
+# headers and stay quiet. CMAKE_COMPILE_WARNING_AS_ERROR=ON makes them fail
+# the build.
+add_library(MeshNetworkWarnings INTERFACE)
+target_compile_options(MeshNetworkWarnings INTERFACE
+    "$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wpedantic>")
+
 add_library(MeshNetwork STATIC
     src/connection.cpp
     src/node.cpp
@@ -34,7 +41,8 @@ add_library(MeshNetwork STATIC
 target_include_directories(MeshNetwork PUBLIC inc)
 target_compile_features(MeshNetwork PUBLIC cxx_std_20)
 target_link_libraries(MeshNetwork
-    PUBLIC Boost::headers Boost::serialization Threads::Threads)
+    PUBLIC Boost::headers Boost::serialization Threads::Threads
+    PRIVATE MeshNetworkWarnings)
 
 if(PROJECT_IS_TOP_LEVEL)
     include(CTest)

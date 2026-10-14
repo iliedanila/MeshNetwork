@@ -121,7 +121,7 @@ void Connection::readHeader(ReadCallback _callback) {
         socket,
         boost::asio::buffer(readMessage.getHeader(), Message::eHeaderLength),
         [this, self, _callback](boost::system::error_code error_code,
-                                uint32_t length) {
+                                uint32_t /*length*/) {
             if (error_code) {
                 std::cout << "Error reading header: " << error_code.message()
                           << "\n";

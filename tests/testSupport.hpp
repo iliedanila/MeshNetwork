@@ -126,7 +126,7 @@ class TcpRelay {
         boost::asio::ip::tcp::socket& from;
         boost::asio::ip::tcp::socket& to;
         std::array<char, 4096> readBuffer{};
-        std::string pending;
+        std::string pending{};
         bool holding = false;
         bool writing = false;
     };

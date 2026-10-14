@@ -231,12 +231,12 @@ void Node::onRead(MessageVariant _message, SharedConnection _connection) {
                _message);
 }
 
-void Node::onWrite(MessageVariant message,
-                   boost::system::error_code error) const {}
+void Node::onWrite(MessageVariant /*message*/,
+                   boost::system::error_code /*error*/) const {}
 
-void Node::onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
-                            std::string host, unsigned short port,
-                            const boost::system::error_code& error) {
+void Node::onReconnectTimer(
+    std::shared_ptr<boost::asio::steady_timer> /*keepAlive*/, std::string host,
+    unsigned short port, const boost::system::error_code& error) {
     if (!error && !closing) {
         connect(host, port, true);
     }
@@ -293,7 +293,7 @@ void Node::handleMessage(DataMessage& _message, SharedConnection _connection) {
 }
 
 void Node::handleMessage(DataMessageAck& _message,
-                         SharedConnection _connection) {
+                         SharedConnection /*connection*/) {
     if (_message.destinationNodeName == name) {
         completePendingSend(_message.messageID, _message.error);
     } else {
@@ -305,7 +305,8 @@ void Node::handleMessage(DataMessageAck& _message,
     }
 }
 
-void Node::handleMessage(LogMessage& _message, SharedConnection _connection) {
+void Node::handleMessage(LogMessage& _message,
+                         SharedConnection /*connection*/) {
     if (_message.getDestinationNodeName() == name) {
         printLog(_message.getMillisecondsSinceEpoch(),
                  _message.getSourceNodeName(), _message.getLogMessage());

@@ -35,11 +35,11 @@ class LogMessage {
     friend class boost::serialization::access;
 
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& millisecondsSinceEpoch;
-        ar& sourceNodeName;
-        ar& destinationNodeName;
-        ar& logMessage;
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & millisecondsSinceEpoch;
+        ar & sourceNodeName;
+        ar & destinationNodeName;
+        ar & logMessage;
     }
 
     int64_t millisecondsSinceEpoch;

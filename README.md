@@ -7,5 +7,6 @@ http://www.boost.org/. If CMake doesn't find Boost, pass `-DCMAKE_PREFIX_PATH=<w
 
 Build and test on its own with
 `cmake -S . -B build && cmake --build build && (cd build && ctest)`.
+Add `-DCMAKE_COMPILE_WARNING_AS_ERROR=ON` to make compiler warnings fail the build.
 
 Example of usages can be found in https://github.com/iliedanila/PubSub

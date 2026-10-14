@@ -19,8 +19,8 @@ class Handshake {
     friend class boost::serialization::access;
 
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& nodeName;
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & nodeName;
     }
 
     std::string nodeName;

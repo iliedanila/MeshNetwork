@@ -33,12 +33,12 @@ class DataMessage {
     friend class Node;
 
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& sourceNodeName;
-        ar& destinationNodeName;
-        ar& buffer;
-        ar& distance;
-        ar& messageID;
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & sourceNodeName;
+        ar & destinationNodeName;
+        ar & buffer;
+        ar & distance;
+        ar & messageID;
     }
 
    private:
