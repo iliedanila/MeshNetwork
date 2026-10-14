@@ -52,8 +52,6 @@ class Node {
     io_context& getIOService() const { return ioservice; }
 
    private:
-    friend struct MessageVisitor;
-
     SharedConnection addConnection(
         tcp::socket&& socket, std::optional<ReconnectTarget> reconnectTarget);
 
@@ -75,8 +73,14 @@ class Node {
                           std::string host, unsigned short port,
                           const boost::system::error_code& error);
 
-    template <typename MessageT>
-    void handleMessage(MessageT&, SharedConnection);
+    // One handler per MessageVariant alternative. onRead dispatches with
+    // std::visit, so a missing one is a compile error.
+    void handleMessage(RoutingMessage&, SharedConnection);
+    void handleMessage(DataMessage&, SharedConnection);
+    void handleMessage(DataMessageAck&, SharedConnection);
+    void handleMessage(LogMessage&, SharedConnection);
+    void handleMessage(Handshake&, SharedConnection);
+    void handleMessage(HandshakeReply&, SharedConnection);
 
     // A route as this node holds it: the hops from the next hop (first) to
     // the destination (last), and the connection to the next hop.

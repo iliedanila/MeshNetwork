@@ -1,15 +1,14 @@
 #include "node.hpp"
 #include "allMessages.hpp"
 #include "connection.hpp"
-#include "messageVisitor.hpp"
 
 #include <algorithm>
-#include <boost/variant/apply_visitor.hpp>
 #include <chrono>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <variant>
 
 using namespace boost::asio::ip;
 
@@ -228,7 +227,8 @@ void Node::onRead(MessageVariant _message, SharedConnection _connection) {
     if (connections.count(_connection) == 0) {
         return;
     }
-    boost::apply_visitor(MessageVisitor(*this, _connection), _message);
+    std::visit([&](auto& message) { handleMessage(message, _connection); },
+               _message);
 }
 
 void Node::onWrite(MessageVariant message,
@@ -242,7 +242,6 @@ void Node::onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
     }
 }
 
-template <>
 void Node::handleMessage(RoutingMessage& _message,
                          SharedConnection _connection) {
     RoutingMessage reply;
@@ -266,7 +265,6 @@ void Node::handleMessage(RoutingMessage& _message,
     }
 }
 
-template <>
 void Node::handleMessage(DataMessage& _message, SharedConnection _connection) {
     _message.distance++;
 
@@ -294,7 +292,6 @@ void Node::handleMessage(DataMessage& _message, SharedConnection _connection) {
     }
 }
 
-template <>
 void Node::handleMessage(DataMessageAck& _message,
                          SharedConnection _connection) {
     if (_message.destinationNodeName == name) {
@@ -308,7 +305,6 @@ void Node::handleMessage(DataMessageAck& _message,
     }
 }
 
-template <>
 void Node::handleMessage(LogMessage& _message, SharedConnection _connection) {
     if (_message.getDestinationNodeName() == name) {
         printLog(_message.getMillisecondsSinceEpoch(),
@@ -326,7 +322,6 @@ void Node::handleMessage(LogMessage& _message, SharedConnection _connection) {
     }
 }
 
-template <>
 void Node::handleMessage(Handshake& _message, SharedConnection _connection) {
     // this is the accepted connection.
     std::cout << name << ": connection with node " << _message.getNodeName()
@@ -340,7 +335,6 @@ void Node::handleMessage(Handshake& _message, SharedConnection _connection) {
                       });
 }
 
-template <>
 void Node::handleMessage(HandshakeReply& _message,
                          SharedConnection _connection) {
     // this is the connected connection.

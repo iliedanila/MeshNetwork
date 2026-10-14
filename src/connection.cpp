@@ -6,6 +6,9 @@
 // #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+// Writes a std::variant as an int index and the value, as boost::variant was
+// written. Not boost/serialization/std_variant.hpp: its index is a size_t,
+// which would change the wire format.
 #include <boost/serialization/variant.hpp>
 #include <iostream>
 
