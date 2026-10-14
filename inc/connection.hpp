@@ -10,9 +10,6 @@
 #include "allMessages.hpp"
 #include "message.hpp"
 
-using namespace boost::asio;
-using namespace ip;
-
 namespace NetworkLayer {
 
 class Node;
@@ -32,7 +29,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
    public:
     enum Type { eAccepted, eConnected };
 
-    Connection(Node& node, io_context& ioservice, tcp::socket&& socket,
+    Connection(Node& node, boost::asio::io_context& ioservice,
+               boost::asio::ip::tcp::socket&& socket,
                std::optional<ReconnectTarget> reconnectTarget,
                std::function<void(std::shared_ptr<Connection>)> closeHandler);
 
@@ -53,15 +51,17 @@ class Connection : public std::enable_shared_from_this<Connection> {
     }
 
    private:
-    void write();
+    // Coroutines keep copies of their parameters, so `self` keeps the
+    // connection alive for as long as a loop runs.
+    boost::asio::awaitable<void> readLoop(SharedConnection self,
+                                          ReadCallback callback);
+    boost::asio::awaitable<void> writeLoop(SharedConnection self);
+
     void failQueuedWrites(boost::system::error_code error);
     void closeAfterError();
 
-    void readHeader(ReadCallback readCallback);
-    void readBody(ReadCallback readCallback);
-
-    io_context& ioservice;
-    tcp::socket socket;
+    boost::asio::io_context& ioservice;
+    boost::asio::ip::tcp::socket socket;
     std::optional<ReconnectTarget> reconnectTarget;
     std::function<void(std::shared_ptr<Connection>)> closeHandler;
 

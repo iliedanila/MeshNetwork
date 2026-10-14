@@ -28,11 +28,11 @@ class DataMessageAck {
     friend class Node;
 
     template <class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& sourceNodeName;
-        ar& destinationNodeName;
-        ar& error;
-        ar& messageID;
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & sourceNodeName;
+        ar & destinationNodeName;
+        ar & error;
+        ar & messageID;
     }
 
    private:

@@ -1,7 +1,8 @@
 #ifndef allMessages_h
 #define allMessages_h
 
-#include <boost/variant.hpp>
+#include <variant>
+
 #include "dataMessage.hpp"
 #include "dataMessageAck.hpp"
 #include "handshake.hpp"
@@ -11,9 +12,10 @@
 
 namespace NetworkLayer {
 
-typedef boost::variant<RoutingMessage, DataMessage, DataMessageAck, LogMessage,
-                       Handshake, HandshakeReply>
-    MessageVariant;
-}
+// A frame carries the index of its alternative, so new alternatives go at
+// the end; reordering or inserting breaks running nodes.
+using MessageVariant = std::variant<RoutingMessage, DataMessage, DataMessageAck,
+                                    LogMessage, Handshake, HandshakeReply>;
+}  // namespace NetworkLayer
 
 #endif /* allMessages_h */
