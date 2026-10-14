@@ -23,6 +23,7 @@ target_compile_options(MeshNetworkWarnings INTERFACE
 
 add_library(MeshNetwork STATIC
     src/connection.cpp
+    src/coroutines.hpp
     src/node.cpp
     inc/allMessages.hpp
     inc/connection.hpp

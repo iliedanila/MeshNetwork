@@ -2,7 +2,6 @@
 #define node_hpp
 
 #include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <functional>
 #include <map>
 #include <set>
@@ -62,13 +61,11 @@ class Node {
 
     void onWrite(MessageVariant message, boost::system::error_code error) const;
 
-    void onConnectFailed(const std::string& host, unsigned short port,
-                         bool reconnect,
-                         const boost::system::error_code& error);
+    boost::asio::awaitable<void> acceptLoop();
 
-    void onReconnectTimer(std::shared_ptr<boost::asio::steady_timer> timer,
-                          std::string host, unsigned short port,
-                          const boost::system::error_code& error);
+    boost::asio::awaitable<void> connectLoop(std::string host,
+                                             unsigned short port,
+                                             bool reconnect);
 
     // One handler per MessageVariant alternative. onRead dispatches with
     // std::visit, so a missing one is a compile error.
@@ -124,7 +121,6 @@ class Node {
     std::function<void(DataMessage&)> messageAcceptor;
     NewNodeStatusCallbackT notifyNewNodeStatusCallback;
 
-    boost::asio::ip::tcp::socket accept_socket;
     boost::asio::io_context& ioservice;
     bool isLogger;
 };
