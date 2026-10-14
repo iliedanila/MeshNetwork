@@ -12,6 +12,8 @@
 #include <boost/serialization/variant.hpp>
 #include <iostream>
 
+using boost::asio::ip::tcp;
+
 namespace NetworkLayer {
 
 Connection::Connection(
@@ -40,8 +42,9 @@ void Connection::write() {
 
     boost::asio::async_write(
         socket,
-        buffer(writeMessages.front().first.getOutputBuffer(),
-               writeMessages.front().first.getOutputBuffer().size()),
+        boost::asio::buffer(
+            writeMessages.front().first.getOutputBuffer(),
+            writeMessages.front().first.getOutputBuffer().size()),
         [this, self](boost::system::error_code error, uint32_t /*lenght*/) {
             if (error) {
                 failQueuedWrites(error);
@@ -115,7 +118,8 @@ void Connection::readHeader(ReadCallback _callback) {
     auto self(shared_from_this());
 
     boost::asio::async_read(
-        socket, buffer(readMessage.getHeader(), Message::eHeaderLength),
+        socket,
+        boost::asio::buffer(readMessage.getHeader(), Message::eHeaderLength),
         [this, self, _callback](boost::system::error_code error_code,
                                 uint32_t length) {
             if (error_code) {
@@ -136,7 +140,8 @@ void Connection::readBody(ReadCallback _callback) {
     auto self(shared_from_this());
 
     boost::asio::async_read(
-        socket, buffer(readMessage.getBody(), readMessage.getBodySize()),
+        socket,
+        boost::asio::buffer(readMessage.getBody(), readMessage.getBodySize()),
         [this, self, _callback](boost::system::error_code error_code,
                                 uint32_t /*length*/) {
             if (error_code) {

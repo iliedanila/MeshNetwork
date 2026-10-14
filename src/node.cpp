@@ -10,7 +10,7 @@
 #include <string>
 #include <variant>
 
-using namespace boost::asio::ip;
+using boost::asio::ip::tcp;
 
 namespace NetworkLayer {
 
